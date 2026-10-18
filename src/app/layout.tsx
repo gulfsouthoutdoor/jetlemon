@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "ServiceDesk — CRM for service businesses", template: "%s · ServiceDesk" },
+  title: { default: "JetLemon — CRM for service businesses", template: "%s · JetLemon" },
   description: "Customers, scheduling, jobs and invoicing for cleaning, delivery, and field service businesses.",
 };
 

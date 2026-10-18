@@ -1,4 +1,4 @@
-# ServiceDesk CRM
+# JetLemon
 
 A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field service, trades).
 
@@ -29,15 +29,18 @@ A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field
 
 For local webhook testing: `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
 
-## Deploy (production: https://crm.jetlemon.com)
+## Deploy (production: https://jetlemon.com)
 
 1. Import the GitHub repo in Vercel and add the environment variables from `.env.example`.
-2. In Vercel → Project → Settings → Domains, add `crm.jetlemon.com`. Vercel shows a CNAME target.
-3. In HostGator cPanel → Zone Editor → jetlemon.com → **+ CNAME Record**:
-   name `crm`, target = the value Vercel shows. HTTPS is issued automatically once DNS resolves.
-4. In Supabase → Authentication → URL Configuration: Site URL `https://crm.jetlemon.com`, and add
-   `https://crm.jetlemon.com/auth/callback` to the redirect URLs.
-5. Stripe webhook endpoint: `https://crm.jetlemon.com/api/stripe/webhook`.
+2. In Vercel → Project → Settings → Domains, add `jetlemon.com` and `www.jetlemon.com`
+   (redirect www → jetlemon.com). Vercel shows the exact DNS values to use.
+3. In HostGator cPanel → Zone Editor → jetlemon.com (keep HostGator's nameservers):
+   - Edit the existing **A** record for `jetlemon.com` to point to the IP Vercel shows.
+   - Edit or replace the `www` record with a **CNAME** to the target Vercel shows.
+   - Leave MX/mail records alone. HTTPS is issued automatically once DNS resolves.
+4. In Supabase → Authentication → URL Configuration: Site URL `https://jetlemon.com`, and add
+   `https://jetlemon.com/auth/callback` to the redirect URLs.
+5. Stripe webhook endpoint: `https://jetlemon.com/api/stripe/webhook`.
 
 ## Project layout
 

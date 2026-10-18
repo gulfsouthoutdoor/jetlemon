@@ -17,7 +17,7 @@ export default function LandingPage() {
     <div className="bg-white">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <Logo /> ServiceDesk
+          <Logo /> JetLemon
         </Link>
         <nav className="flex items-center gap-3">
           <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">
@@ -66,7 +66,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-500">© {new Date().getFullYear()} ServiceDesk</footer>
+      <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-500">© {new Date().getFullYear()} JetLemon</footer>
     </div>
   );
 }

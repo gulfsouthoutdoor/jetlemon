@@ -20,7 +20,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         {success && <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Thanks! Your subscription is being activated — refresh in a moment.</p>}
         {!access && (
           <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            Your {org.subscription_status === "trialing" ? "free trial has ended" : "subscription is inactive"}. Subscribe to keep using ServiceDesk — your data is safe.
+            Your {org.subscription_status === "trialing" ? "free trial has ended" : "subscription is inactive"}. Subscribe to keep using JetLemon — your data is safe.
           </p>
         )}
         <Card>

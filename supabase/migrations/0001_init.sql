@@ -1,4 +1,4 @@
--- ServiceDesk CRM — initial schema
+-- JetLemon — initial schema
 -- Multi-tenant: every business row carries org_id, and RLS restricts access to org members.
 
 create extension if not exists "pgcrypto";

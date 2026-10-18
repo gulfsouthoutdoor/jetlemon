@@ -29,10 +29,15 @@ A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field
 
 For local webhook testing: `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
 
-## Deploy
+## Deploy (production: https://crm.jetlemon.com)
 
-Push to GitHub and import the repo in Vercel. Add the same environment variables there, and set
-`NEXT_PUBLIC_SITE_URL` to the production URL.
+1. Import the GitHub repo in Vercel and add the environment variables from `.env.example`.
+2. In Vercel → Project → Settings → Domains, add `crm.jetlemon.com`. Vercel shows a CNAME target.
+3. In HostGator cPanel → Zone Editor → jetlemon.com → **+ CNAME Record**:
+   name `crm`, target = the value Vercel shows. HTTPS is issued automatically once DNS resolves.
+4. In Supabase → Authentication → URL Configuration: Site URL `https://crm.jetlemon.com`, and add
+   `https://crm.jetlemon.com/auth/callback` to the redirect URLs.
+5. Stripe webhook endpoint: `https://crm.jetlemon.com/api/stripe/webhook`.
 
 ## Project layout
 

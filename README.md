@@ -34,13 +34,15 @@ For local webhook testing: `stripe listen --forward-to localhost:3000/api/stripe
 1. Import the GitHub repo in Vercel and add the environment variables from `.env.example`.
 2. In Vercel → Project → Settings → Domains, add `jetlemon.com` and `www.jetlemon.com`
    (redirect www → jetlemon.com). Vercel shows the exact DNS values to use.
-3. In HostGator cPanel → Zone Editor → jetlemon.com (keep HostGator's nameservers):
+3. Back up the old site first: cPanel → File Manager → jetlemon.com's folder (the old Expo Control
+   app) → select all → Compress → download the .zip. Its data lives in Supabase and is not affected.
+4. In HostGator cPanel → Zone Editor → jetlemon.com (keep HostGator's nameservers):
    - Edit the existing **A** record for `jetlemon.com` to point to the IP Vercel shows.
    - Edit or replace the `www` record with a **CNAME** to the target Vercel shows.
    - Leave MX/mail records alone. HTTPS is issued automatically once DNS resolves.
-4. In Supabase → Authentication → URL Configuration: Site URL `https://jetlemon.com`, and add
+5. In Supabase → Authentication → URL Configuration: Site URL `https://jetlemon.com`, and add
    `https://jetlemon.com/auth/callback` to the redirect URLs.
-5. Stripe webhook endpoint: `https://jetlemon.com/api/stripe/webhook`.
+6. Stripe webhook endpoint: `https://jetlemon.com/api/stripe/webhook`.
 
 ## Project layout
 

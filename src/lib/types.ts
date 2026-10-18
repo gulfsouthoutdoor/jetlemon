@@ -1,0 +1,72 @@
+export type Organization = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  timezone: string;
+  trial_ends_at: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  subscription_status: string;
+};
+
+export type Customer = {
+  id: string;
+  org_id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  tags: string[];
+  notes: string | null;
+  created_at: string;
+};
+
+export const JOB_STATUSES = ["lead", "scheduled", "in_progress", "completed", "cancelled"] as const;
+export type JobStatus = (typeof JOB_STATUSES)[number];
+
+export type Job = {
+  id: string;
+  org_id: string;
+  customer_id: string | null;
+  title: string;
+  description: string | null;
+  status: JobStatus;
+  scheduled_at: string | null;
+  duration_minutes: number;
+  address: string | null;
+  price: number;
+  assigned_to: string | null;
+  created_at: string;
+  customers?: { id: string; name: string } | null;
+};
+
+export const INVOICE_STATUSES = ["draft", "sent", "paid", "void"] as const;
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
+
+export type Invoice = {
+  id: string;
+  org_id: string;
+  customer_id: string | null;
+  job_id: string | null;
+  number: number;
+  status: InvoiceStatus;
+  issued_on: string;
+  due_on: string;
+  paid_on: string | null;
+  notes: string | null;
+  created_at: string;
+  customers?: { id: string; name: string; email: string | null; address: string | null } | null;
+  invoice_items?: { quantity: number; unit_price: number }[];
+};
+
+export type InvoiceItem = {
+  id: string;
+  invoice_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+};
+
+export type Member = { user_id: string; email: string; role: string; created_at: string };

@@ -5,6 +5,7 @@ import { dateTime } from "@/lib/format";
 import { metaConfigured } from "@/lib/meta";
 import { getContext } from "@/lib/org";
 import { smsConfigured } from "@/lib/sms";
+import { getTextUsage } from "@/lib/texting";
 import type { Member, MetaPage } from "@/lib/types";
 import { cancelInvite, disconnectPage, inviteMember, regenerateLeadAddress, removeMember, updateBusiness, updateTexting } from "./actions";
 
@@ -12,10 +13,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const { error, saved } = await searchParams;
   const { supabase, org, user, role } = await getContext();
   const isOwner = role === "owner";
-  const [{ data: members }, { data: invites }, { data: pages }] = await Promise.all([
+  const [{ data: members }, { data: invites }, { data: pages }, usage] = await Promise.all([
     supabase.rpc("org_members", { target_org: org.id }),
     supabase.from("invitations").select("*").eq("org_id", org.id).order("created_at"),
     supabase.from("meta_pages").select("id, org_id, page_id, page_name, connected_at").eq("org_id", org.id).order("connected_at"),
+    getTextUsage(supabase, org),
   ]);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const leadAddress = `${siteUrl}/api/leads/${org.inbound_token}`;
@@ -115,6 +117,36 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                   <p className="text-slate-500">No number yet. {smsConfigured() ? "Contact support to get one assigned." : "Texting is not switched on for this server yet."}</p>
                 )}
               </div>
+              {org.sms_number && (
+                <div className="rounded-md bg-slate-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-slate-700">This month</p>
+                    <p className="text-slate-600">
+                      <span className="font-semibold text-slate-900">{usage.used}</span> of {usage.allowance} texts
+                      {usage.blocks > 0 && ` · ${usage.blocks} extra block${usage.blocks === 1 ? "" : "s"} bought`}
+                    </p>
+                  </div>
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                    <div
+                      className={`h-full ${usage.capReached ? "bg-red-500" : usage.used > usage.included ? "bg-amber-500" : "bg-indigo-500"}`}
+                      style={{ width: `${Math.min(100, (usage.used / Math.max(1, usage.allowance)) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    {usage.included} texts are included. After that, extra texts are added in blocks of {usage.blockSize} for ${(usage.blockPriceCents / 100).toFixed(0)} each,
+                    billed on your next invoice — never past the cap below.
+                  </p>
+                  {usage.capReached && <p className="mt-1 text-xs font-medium text-red-700">Cap reached — texting is stopped until next month or until you raise the cap.</p>}
+                </div>
+              )}
+              <Field label="Monthly cap: stop after this many extra blocks (0 = never buy extra)">
+                <Input name="text_block_limit" type="number" min={0} max={50} defaultValue={org.text_block_limit} className="w-28" />
+              </Field>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" name="texting_paused" defaultChecked={org.texting_paused} className="h-4 w-4 rounded border-slate-300" />
+                <span className="font-medium text-slate-700">Pause all texting</span>
+                <span className="text-slate-500">— nothing goes out, nothing is billed</span>
+              </label>
               <Field label="Text me when a new lead comes in (your cell)">
                 <Input name="notify_phone" defaultValue={org.notify_phone ?? ""} placeholder="205-555-0142" />
               </Field>

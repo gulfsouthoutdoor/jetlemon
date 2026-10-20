@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fillTemplate, normalizePhone, sendSms } from "@/lib/sms";
+import { fillTemplate, normalizePhone } from "@/lib/sms";
+import { sendBusinessText } from "@/lib/texting";
 
 export type InboundLead = {
   name?: string | null;
@@ -93,40 +94,16 @@ export async function createInboundLead(admin: SupabaseClient, orgId: string, le
   // Speed-to-lead text to the customer.
   if (org.auto_text_enabled && org.sms_number && phone) {
     const body = fillTemplate(org.auto_text_template, { name, business: org.name });
-    await logAndSend(admin, { orgId, customerId, from: org.sms_number, to: phone, body, kind: "auto_text" });
+    await sendBusinessText(admin, org, { to: phone, body, customerId, kind: "auto_text" });
   }
 
   // Alert the owner.
   if (org.sms_number && org.notify_phone) {
     const body = `New ${sourceLabel(lead.source).toLowerCase()} lead: ${name}${phone ? ` ${phone}` : ""}. ${siteUrl()}/jobs/${job.id}`;
-    await logAndSend(admin, { orgId, customerId: null, from: org.sms_number, to: org.notify_phone, body, kind: "lead_alert" });
+    await sendBusinessText(admin, org, { to: org.notify_phone, body, customerId: null, kind: "lead_alert" });
   }
 
   return { jobId: job.id as string, duplicate: false };
-}
-
-async function logAndSend(
-  admin: SupabaseClient,
-  m: { orgId: string; customerId: string | null; from: string; to: string; body: string; kind: string },
-) {
-  let sid: string | null = null;
-  let status = "sent";
-  try {
-    sid = await sendSms(m.from, m.to, m.body);
-  } catch (err) {
-    status = `failed: ${(err as Error).message}`.slice(0, 200);
-  }
-  await admin.from("messages").insert({
-    org_id: m.orgId,
-    customer_id: m.customerId,
-    direction: "out",
-    body: m.body,
-    from_number: m.from,
-    to_number: m.to,
-    provider_sid: sid,
-    status,
-    kind: m.kind,
-  });
 }
 
 export function sourceLabel(source: string) {

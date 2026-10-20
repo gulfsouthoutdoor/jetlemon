@@ -14,6 +14,11 @@ export type Organization = {
   notify_phone: string | null;
   auto_text_enabled: boolean;
   auto_text_template: string;
+  texts_included: number;
+  text_block_size: number;
+  text_block_price_cents: number;
+  text_block_limit: number;
+  texting_paused: boolean;
 };
 
 export type MetaPage = { id: string; org_id: string; page_id: string; page_name: string; connected_at: string };

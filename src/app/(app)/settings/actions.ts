@@ -50,6 +50,8 @@ export async function updateTexting(fd: FormData) {
       notify_phone: notifyPhone,
       auto_text_enabled: fd.get("auto_text_enabled") === "on",
       auto_text_template: str(fd, "auto_text_template") ?? org.auto_text_template,
+      text_block_limit: Math.max(0, Math.min(50, Number(str(fd, "text_block_limit") ?? org.text_block_limit) || 0)),
+      texting_paused: fd.get("texting_paused") === "on",
     })
     .eq("id", org.id);
   if (error) redirect(`/settings?error=${encodeURIComponent(error.message)}`);

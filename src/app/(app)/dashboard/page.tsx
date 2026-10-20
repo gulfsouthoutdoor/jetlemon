@@ -3,6 +3,7 @@ import { ButtonLink, Card, Empty, PageHeader } from "@/components/ui";
 import { getContext } from "@/lib/org";
 import { date, dateTime, dayKey, fromLocalInput, invoiceTotal, isOverdue, money, time } from "@/lib/format";
 import type { Invoice, Job } from "@/lib/types";
+import { getTextUsage } from "@/lib/texting";
 
 function Stat({ label, value, href }: { label: string; value: string; href?: string }) {
   const body = (
@@ -37,6 +38,7 @@ export default async function DashboardPage() {
     supabase.from("jobs").select("*, customers(id, name)").eq("status", "lead").order("created_at", { ascending: false }).limit(5),
   ]);
 
+  const usage = org.sms_number ? await getTextUsage(supabase, org) : null;
   const jobs = (upcoming ?? []) as Job[];
   const todaysJobs = jobs.filter((j) => j.scheduled_at && dayKey(new Date(j.scheduled_at), tz) === today);
   const sent = (openInvoices ?? []) as Invoice[];
@@ -58,6 +60,12 @@ export default async function DashboardPage() {
           </>
         }
       />
+      {usage && (usage.paused || usage.capReached) && (
+        <Link href="/settings" className="mb-6 block rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 hover:bg-amber-100">
+          {usage.paused ? "Texting is paused" : `Texting stopped: monthly cap reached (${usage.used} of ${usage.allowance} texts)`} — auto-texts and lead alerts are not going out.{" "}
+          <span className="font-medium underline">Change in Settings →</span>
+        </Link>
+      )}
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Jobs today" value={String(todaysJobs.length)} href="/schedule" />
         <Stat label="Revenue this month" value={money(revenue)} href="/invoices?status=paid" />

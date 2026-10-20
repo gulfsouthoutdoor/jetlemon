@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fillTemplate, normalizePhone } from "@/lib/sms";
 import { sendBusinessText } from "@/lib/texting";
+import { aiConfigured, askJson, businessContext } from "@/lib/ai";
 
 export type InboundLead = {
   name?: string | null;
@@ -89,6 +90,20 @@ export async function createInboundLead(admin: SupabaseClient, orgId: string, le
       return { jobId: existing!.id as string, duplicate: true };
     }
     throw new Error(jobError.message);
+  }
+
+  // One-line AI summary of what the lead wants and what to do next.
+  if (aiConfigured()) {
+    try {
+      const r = await askJson<{ summary: string }>(
+        `You summarize a new lead for a busy service business owner in ONE sentence (under 160 characters): what they want, any timing or budget signals, and the single best next step. Plain words, no emojis.\n${businessContext(org)}\nReturn JSON: {"summary": "..."}`,
+        lines.join("\n") + `\nName: ${name}${phone ? ", phone on file" : ", no phone"}${email ? ", email on file" : ""}`,
+        200,
+      );
+      if (r.summary) await admin.from("jobs").update({ ai_summary: String(r.summary).slice(0, 240) }).eq("id", job.id);
+    } catch {
+      // Summary is a nice-to-have; never block the lead.
+    }
   }
 
   // Speed-to-lead text to the customer.

@@ -48,6 +48,24 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <Field label="Time zone" className="sm:col-span-2">
                 <TimezoneSelect name="timezone" defaultValue={org.timezone} />
               </Field>
+              <Field label="What you do" className="sm:col-span-2">
+                <Textarea name="services" defaultValue={org.services ?? ""} rows={2} />
+              </Field>
+              <Field label="Service area">
+                <Input name="service_area" defaultValue={org.service_area ?? ""} />
+              </Field>
+              <Field label="Hours">
+                <Input name="hours" defaultValue={org.hours ?? ""} />
+              </Field>
+              <Field label="Website" className="sm:col-span-2">
+                <Input name="website" defaultValue={org.website ?? ""} />
+              </Field>
+              <Field label="Line above your lead form" className="sm:col-span-2">
+                <Input name="lead_form_intro" defaultValue={org.lead_form_intro ?? ""} />
+              </Field>
+              <Field label="Bottom of every invoice" className="sm:col-span-2">
+                <Input name="invoice_footer" defaultValue={org.invoice_footer ?? ""} />
+              </Field>
               {isOwner && (
                 <div>
                   <Button>Save</Button>
@@ -158,6 +176,18 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 <Textarea name="auto_text_template" defaultValue={org.auto_text_template} />
               </Field>
               <p className="text-xs text-slate-500">You can use {"{first_name}"}, {"{name}"} and {"{business}"}. Needs a texting number and the lead&apos;s phone.</p>
+              <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" name="daily_brief_enabled" defaultChecked={org.daily_brief_enabled} className="h-4 w-4 rounded border-slate-300" />
+                  <span className="font-medium text-slate-700">Text me a daily rundown</span>
+                </label>
+                <label className="flex items-center gap-2 text-slate-600">
+                  at
+                  <Input name="daily_brief_hour" type="number" min={0} max={23} defaultValue={org.daily_brief_hour} className="w-20" />
+                  o&apos;clock (24-hour)
+                </label>
+              </div>
+              <p className="-mt-2 text-xs text-slate-500">Today&apos;s jobs, overdue invoices, and leads waiting — sent to the alert number above. Counts as one text.</p>
               {isOwner && (
                 <div>
                   <Button>Save</Button>

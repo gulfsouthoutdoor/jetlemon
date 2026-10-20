@@ -17,13 +17,21 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <PageHeader title="Customers" subtitle={`${customers.length} shown`} actions={<ButtonLink href="/customers/new">New customer</ButtonLink>} />
+      <PageHeader title="Customers" subtitle={`${customers.length} shown`} actions={
+          <>
+            <ButtonLink href="/import" variant="secondary">
+              Import
+            </ButtonLink>
+            <ButtonLink href="/customers/new">New customer</ButtonLink>
+          </>
+        }
+      />
       <Card>
         <form className="mb-4">
           <Input name="q" defaultValue={q} placeholder="Search by name, phone, email or address…" />
         </form>
         {customers.length === 0 ? (
-          <Empty>{q ? "No customers match your search." : "No customers yet. Add your first one!"}</Empty>
+          <Empty>{q ? "No customers match your search." : "No customers yet. Add your first one, or import a spreadsheet."}</Empty>
         ) : (
           <div className="overflow-x-auto">
             <table className={tableClass}>

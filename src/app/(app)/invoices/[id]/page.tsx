@@ -126,6 +126,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         )}
 
         {inv.notes && <p className="mt-8 whitespace-pre-line border-t border-slate-100 pt-4 text-sm text-slate-600">{inv.notes}</p>}
+        {org.invoice_footer && <p className="mt-6 text-center text-xs text-slate-500">{org.invoice_footer}</p>}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3 print:hidden">

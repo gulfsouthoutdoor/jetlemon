@@ -16,6 +16,12 @@ export async function updateBusiness(fd: FormData) {
       email: str(fd, "email"),
       address: str(fd, "address"),
       timezone: str(fd, "timezone") ?? org.timezone,
+      services: str(fd, "services"),
+      service_area: str(fd, "service_area"),
+      hours: str(fd, "hours"),
+      website: str(fd, "website"),
+      lead_form_intro: str(fd, "lead_form_intro"),
+      invoice_footer: str(fd, "invoice_footer"),
     })
     .eq("id", org.id);
   if (error) redirect(`/settings?error=${encodeURIComponent(error.message)}`);
@@ -52,6 +58,8 @@ export async function updateTexting(fd: FormData) {
       auto_text_template: str(fd, "auto_text_template") ?? org.auto_text_template,
       text_block_limit: Math.max(0, Math.min(50, Number(str(fd, "text_block_limit") ?? org.text_block_limit) || 0)),
       texting_paused: fd.get("texting_paused") === "on",
+      daily_brief_enabled: fd.get("daily_brief_enabled") === "on",
+      daily_brief_hour: Math.max(0, Math.min(23, Number(str(fd, "daily_brief_hour") ?? org.daily_brief_hour) || 7)),
     })
     .eq("id", org.id);
   if (error) redirect(`/settings?error=${encodeURIComponent(error.message)}`);

@@ -57,6 +57,11 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
           </>
         }
       />
+      {job.ai_summary && (
+        <p className="mb-6 rounded-md border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+          <span className="font-medium">At a glance:</span> {job.ai_summary}
+        </p>
+      )}
       <div className="grid gap-6 lg:grid-cols-3">
         <Card title="Job details" className="lg:col-span-2">
           <JobForm

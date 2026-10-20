@@ -6,7 +6,7 @@ export default async function LeadFormPage({ params, searchParams }: { params: P
   const { token } = await params;
   const { sent } = await searchParams;
   const admin = createAdminClient();
-  const { data: org } = await admin.from("organizations").select("name, phone").eq("inbound_token", token).maybeSingle();
+  const { data: org } = await admin.from("organizations").select("name, phone, lead_form_intro").eq("inbound_token", token).maybeSingle();
   if (!org) notFound();
 
   const input = "w-full rounded-md border border-slate-300 px-3 py-2.5 text-base text-slate-900 focus:border-slate-900 focus:outline-none";
@@ -19,7 +19,7 @@ export default async function LeadFormPage({ params, searchParams }: { params: P
           <p className="mt-4 rounded-md bg-emerald-50 px-3 py-3 text-emerald-800">Thanks — we got your request and will be in touch shortly.</p>
         ) : (
           <>
-            <p className="mt-1 text-sm text-slate-500">Tell us what you need and we&apos;ll get right back to you.</p>
+            <p className="mt-1 text-sm text-slate-500">{org.lead_form_intro || "Tell us what you need and we'll get right back to you."}</p>
             <form action={`/api/leads/${token}`} method="post" className="mt-5 space-y-3">
               <input type="hidden" name="source" value="website" />
               <input type="hidden" name="redirect" value={`${process.env.NEXT_PUBLIC_SITE_URL}/lead/${token}?sent=1`} />

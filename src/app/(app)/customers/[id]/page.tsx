@@ -4,7 +4,9 @@ import { Badge, Button, ButtonLink, Card, Empty, ErrorNote, PageHeader, Textarea
 import { getContext } from "@/lib/org";
 import { dateTime, invoiceTotal, money } from "@/lib/format";
 import type { Customer, Invoice, Job, Message } from "@/lib/types";
-import { addNote, deleteCustomer, deleteNote, sendText, updateCustomer } from "../actions";
+import { TextComposer } from "@/components/text-composer";
+import { aiConfigured } from "@/lib/ai";
+import { addNote, deleteCustomer, deleteNote, sendText, suggestReplies, updateCustomer } from "../actions";
 import { CustomerForm } from "../customer-form";
 
 export default async function CustomerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string }> }) {
@@ -68,10 +70,13 @@ export default async function CustomerPage({ params, searchParams }: { params: P
             ) : (
               <Empty>{c.phone ? "No texts yet." : "Add a phone number to text this customer."}</Empty>
             )}
-            <form action={sendText.bind(null, c.id)} className="flex gap-2">
-              <Textarea name="body" rows={2} placeholder={org.sms_number ? "Type a text…" : "Texting needs a number — see Settings"} required disabled={!org.sms_number || !c.phone} />
-              <Button disabled={!org.sms_number || !c.phone}>Send</Button>
-            </form>
+            <TextComposer
+              sendAction={sendText.bind(null, c.id)}
+              suggestAction={suggestReplies.bind(null, c.id)}
+              disabled={!org.sms_number || !c.phone}
+              placeholder={org.sms_number ? "Type a text…" : "Texting needs a number — see Settings"}
+              aiOn={aiConfigured()}
+            />
           </Card>
 
           <Card title="Jobs">

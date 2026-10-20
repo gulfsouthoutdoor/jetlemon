@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ButtonLink, Card, Empty, PageHeader } from "@/components/ui";
 import { getContext } from "@/lib/org";
 import { date, dateTime, dayKey, fromLocalInput, invoiceTotal, isOverdue, money, time } from "@/lib/format";
@@ -17,6 +18,7 @@ function Stat({ label, value, href }: { label: string; value: string; href?: str
 
 export default async function DashboardPage() {
   const { supabase, org } = await getContext();
+  if (!org.setup_done) redirect("/setup");
   const tz = org.timezone;
   const today = dayKey(new Date(), tz);
   const monthStart = today.slice(0, 8) + "01";
@@ -122,11 +124,14 @@ export default async function DashboardPage() {
             ) : (
               <ul className="space-y-2 text-sm">
                 {(leads as Job[]).map((j) => (
-                  <li key={j.id} className="flex justify-between gap-2">
-                    <Link href={`/jobs/${j.id}`} className="truncate text-indigo-600 hover:underline">
-                      {j.title}
-                    </Link>
-                    <span className="shrink-0 text-slate-400">{date(j.created_at)}</span>
+                  <li key={j.id}>
+                    <div className="flex justify-between gap-2">
+                      <Link href={`/jobs/${j.id}`} className="truncate text-indigo-600 hover:underline">
+                        {j.title}
+                      </Link>
+                      <span className="shrink-0 text-slate-400">{date(j.created_at)}</span>
+                    </div>
+                    {j.ai_summary && <p className="text-xs text-slate-500">{j.ai_summary}</p>}
                   </li>
                 ))}
               </ul>

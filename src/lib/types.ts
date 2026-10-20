@@ -19,6 +19,16 @@ export type Organization = {
   text_block_price_cents: number;
   text_block_limit: number;
   texting_paused: boolean;
+  services: string | null;
+  service_area: string | null;
+  hours: string | null;
+  website: string | null;
+  lead_form_intro: string | null;
+  invoice_footer: string | null;
+  setup_done: boolean;
+  daily_brief_enabled: boolean;
+  daily_brief_hour: number;
+  daily_brief_sent_on: string | null;
 };
 
 export type MetaPage = { id: string; org_id: string; page_id: string; page_name: string; connected_at: string };
@@ -65,6 +75,7 @@ export type Job = {
   assigned_to: string | null;
   source: string | null;
   source_ref: string | null;
+  ai_summary: string | null;
   created_at: string;
   customers?: { id: string; name: string } | null;
 };

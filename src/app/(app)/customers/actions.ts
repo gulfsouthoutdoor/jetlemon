@@ -7,6 +7,8 @@ import { str } from "@/lib/format";
 import { normalizePhone } from "@/lib/sms";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendBusinessText } from "@/lib/texting";
+import { aiConfigured, askJson, businessContext } from "@/lib/ai";
+import { dateTime } from "@/lib/format";
 
 function customerFields(fd: FormData) {
   return {
@@ -71,6 +73,31 @@ export async function sendText(customerId: string, fd: FormData) {
   const result = await sendBusinessText(createAdminClient(), org, { to: to!, body, customerId, kind: "manual", sentBy: user.id });
   revalidatePath(`/customers/${customerId}`);
   if (!result.ok) fail(result.reason ?? "Text not sent.");
+}
+
+export async function suggestReplies(customerId: string): Promise<{ suggestions: string[]; error?: string }> {
+  const { supabase, org } = await getContext();
+  if (!aiConfigured()) return { suggestions: [], error: "AI assist is not set up on this server." };
+  const [{ data: customer }, { data: messages }, { data: jobs }] = await Promise.all([
+    supabase.from("customers").select("name, address, tags, notes").eq("id", customerId).eq("org_id", org.id).single(),
+    supabase.from("messages").select("direction, body, created_at").eq("customer_id", customerId).order("created_at", { ascending: false }).limit(12),
+    supabase.from("jobs").select("title, status, scheduled_at, price, description").eq("customer_id", customerId).order("created_at", { ascending: false }).limit(5),
+  ]);
+  if (!customer) return { suggestions: [], error: "Customer not found." };
+  const thread = (messages ?? []).reverse().map((m) => `${m.direction === "in" ? "Customer" : "Us"} (${dateTime(m.created_at, org.timezone)}): ${m.body}`).join("\n");
+  const system = `You draft text-message replies for a small service business owner to send to a customer. Sound like a real person who runs the business: short, warm, plain. 1-2 sentences each, under 240 characters, no emojis, no sign-offs. Never promise a price, date, or time the thread doesn't already support — offer to confirm instead. Give three different options: one quick, one that asks a clarifying question, one that moves toward booking.
+${businessContext(org)}
+Return JSON: {"suggestions": ["...", "...", "..."]}`;
+  const user = `Customer: ${customer.name}${customer.address ? ", " + customer.address : ""}${customer.tags?.length ? " [" + customer.tags.join(", ") + "]" : ""}
+${customer.notes ? "Notes: " + customer.notes + "\n" : ""}Recent jobs: ${(jobs ?? []).map((j) => `${j.title} (${j.status}${j.scheduled_at ? ", " + dateTime(j.scheduled_at, org.timezone) : ""})`).join("; ") || "none"}
+Text thread (oldest first):
+${thread || "(no texts yet — write an opener)"}`;
+  try {
+    const r = await askJson<{ suggestions: string[] }>(system, user, 600);
+    return { suggestions: (r.suggestions ?? []).map(String).slice(0, 3) };
+  } catch (err) {
+    return { suggestions: [], error: (err as Error).message };
+  }
 }
 
 export async function deleteNote(customerId: string, noteId: string) {

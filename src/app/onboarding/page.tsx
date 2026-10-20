@@ -12,7 +12,7 @@ async function createBusiness(formData: FormData) {
   if (error) redirect(`/onboarding?error=${encodeURIComponent(error.message)}`);
   const timezone = str(formData, "timezone");
   if (timezone) await supabase.from("organizations").update({ timezone }).eq("id", orgId);
-  redirect("/dashboard");
+  redirect("/setup");
 }
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {

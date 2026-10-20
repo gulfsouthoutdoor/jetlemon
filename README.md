@@ -13,6 +13,9 @@ A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field
 - Stripe subscription billing (Checkout + Customer Portal + webhook), with app access gated after the trial ends
 - Lead capture: a private lead address per business (website forms, Zapier, Make), a hosted lead form, and
   "Connect Facebook" for Facebook/Instagram lead ads (leads arrive in seconds via webhook)
+- AI assist (Claude): smart import of any spreadsheet or CRM export with column matching, a setup
+  conversation that fills in the business profile and customer-facing wording, suggested text replies,
+  a one-line summary on every new lead, and a daily rundown text to the owner
 - Texting: two-way texts on the customer page, an automatic speed-to-lead text when a lead arrives, and a
   "new lead" alert to the owner's cell
 
@@ -21,7 +24,7 @@ A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field
 ## Setup
 
 1. **Supabase:** create a project, then run `supabase/migrations/0001_init.sql` and then
-   `0002_leads_meta_sms.sql` and `0003_text_blocks.sql` in the SQL editor (or `supabase db push`). Under Authentication → URL Configuration, set the Site URL to your app URL
+   `0002_leads_meta_sms.sql`, `0003_text_blocks.sql` and `0004_ai_assist.sql` in the SQL editor (or `supabase db push`). Under Authentication → URL Configuration, set the Site URL to your app URL
    and add `<your-url>/auth/callback` to the redirect URLs. Keep "Confirm email" turned on, because team
    invites are matched by email address.
 2. **Stripe:** create a Product with a monthly recurring Price. Add a webhook endpoint at
@@ -62,6 +65,13 @@ become leads immediately.
    (`text_block_limit`, default 2 blocks; owners change it in Settings). At the cap, or when the owner flips
    **Pause all texting**, nothing is sent or billed and the dashboard shows a notice. Blocks need an active
    paid subscription; trial accounts get the included texts only. Run `0003_text_blocks.sql`.
+
+### AI assist (optional)
+
+Set `ANTHROPIC_API_KEY`. Every AI feature degrades gracefully without it: import falls back to
+column-name guesses, setup saves the owner's answers as typed, suggestions and summaries are hidden.
+The daily rundown is a plain template (no AI) and runs from the Vercel cron in `vercel.json` once an
+hour; set `CRON_SECRET` in Vercel so only Vercel can trigger it. Owners pick the hour under Settings → Texting.
 
 ### Lead address
 

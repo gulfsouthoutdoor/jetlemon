@@ -9,6 +9,26 @@ export type Organization = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   subscription_status: string;
+  inbound_token: string;
+  sms_number: string | null;
+  notify_phone: string | null;
+  auto_text_enabled: boolean;
+  auto_text_template: string;
+};
+
+export type MetaPage = { id: string; org_id: string; page_id: string; page_name: string; connected_at: string };
+
+export type Message = {
+  id: string;
+  org_id: string;
+  customer_id: string | null;
+  direction: "in" | "out";
+  body: string;
+  from_number: string;
+  to_number: string;
+  status: string;
+  kind: string;
+  created_at: string;
 };
 
 export type Customer = {
@@ -38,6 +58,8 @@ export type Job = {
   address: string | null;
   price: number;
   assigned_to: string | null;
+  source: string | null;
+  source_ref: string | null;
   created_at: string;
   customers?: { id: string; name: string } | null;
 };

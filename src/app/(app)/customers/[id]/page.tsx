@@ -1,21 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Button, ButtonLink, Card, Empty, PageHeader, Textarea } from "@/components/ui";
+import { Badge, Button, ButtonLink, Card, Empty, ErrorNote, PageHeader, Textarea } from "@/components/ui";
 import { getContext } from "@/lib/org";
 import { dateTime, invoiceTotal, money } from "@/lib/format";
-import type { Customer, Invoice, Job } from "@/lib/types";
-import { addNote, deleteCustomer, deleteNote, updateCustomer } from "../actions";
+import type { Customer, Invoice, Job, Message } from "@/lib/types";
+import { addNote, deleteCustomer, deleteNote, sendText, updateCustomer } from "../actions";
 import { CustomerForm } from "../customer-form";
 
-export default async function CustomerPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CustomerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string }> }) {
   const { id } = await params;
+  const { error } = await searchParams;
   const { supabase, org } = await getContext();
 
-  const [{ data: customer }, { data: jobs }, { data: invoices }, { data: notes }] = await Promise.all([
+  const [{ data: customer }, { data: jobs }, { data: invoices }, { data: notes }, { data: messages }] = await Promise.all([
     supabase.from("customers").select("*").eq("id", id).maybeSingle(),
     supabase.from("jobs").select("*").eq("customer_id", id).order("scheduled_at", { ascending: false, nullsFirst: true }),
     supabase.from("invoices").select("*, invoice_items(quantity, unit_price)").eq("customer_id", id).order("number", { ascending: false }),
     supabase.from("notes").select("*").eq("customer_id", id).order("created_at", { ascending: false }),
+    supabase.from("messages").select("*").eq("customer_id", id).order("created_at").limit(200),
   ]);
   if (!customer) notFound();
   const c = customer as Customer;
@@ -40,8 +42,38 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <ErrorNote message={error} />
+      <div className="mt-4 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          <Card title="Text messages">
+            {(messages as Message[])?.length ? (
+              <ul className="mb-4 flex max-h-96 flex-col gap-2 overflow-y-auto">
+                {(messages as Message[]).map((m) => (
+                  <li key={m.id} className={`flex ${m.direction === "out" ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                        m.direction === "out" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-900"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap">{m.body}</p>
+                      <p className={`mt-1 text-[11px] ${m.direction === "out" ? "text-indigo-200" : "text-slate-400"}`}>
+                        {dateTime(m.created_at, org.timezone)}
+                        {m.kind === "auto_text" ? " · auto" : ""}
+                        {m.status.startsWith("failed") ? " · not delivered" : ""}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Empty>{c.phone ? "No texts yet." : "Add a phone number to text this customer."}</Empty>
+            )}
+            <form action={sendText.bind(null, c.id)} className="flex gap-2">
+              <Textarea name="body" rows={2} placeholder={org.sms_number ? "Type a text…" : "Texting needs a number — see Settings"} required disabled={!org.sms_number || !c.phone} />
+              <Button disabled={!org.sms_number || !c.phone}>Send</Button>
+            </form>
+          </Card>
+
           <Card title="Jobs">
             {(jobs as Job[])?.length ? (
               <ul className="divide-y divide-slate-100">

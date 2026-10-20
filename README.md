@@ -11,13 +11,17 @@ A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field
 - Invoices: auto-numbered, line items, draft/sent/paid/void, overdue tracking, print/PDF, email link
 - Dashboard: jobs today, revenue this month, outstanding and overdue invoices, leads
 - Stripe subscription billing (Checkout + Customer Portal + webhook), with app access gated after the trial ends
+- Lead capture: a private lead address per business (website forms, Zapier, Make), a hosted lead form, and
+  "Connect Facebook" for Facebook/Instagram lead ads (leads arrive in seconds via webhook)
+- Texting: two-way texts on the customer page, an automatic speed-to-lead text when a lead arrives, and a
+  "new lead" alert to the owner's cell
 
 **Stack:** Next.js 15 (App Router, Server Actions), Supabase (Auth + Postgres), Tailwind CSS v4, Stripe.
 
 ## Setup
 
-1. **Supabase:** create a project, then run `supabase/migrations/0001_init.sql` in the SQL editor
-   (or `supabase db push`). Under Authentication → URL Configuration, set the Site URL to your app URL
+1. **Supabase:** create a project, then run `supabase/migrations/0001_init.sql` and then
+   `0002_leads_meta_sms.sql` in the SQL editor (or `supabase db push`). Under Authentication → URL Configuration, set the Site URL to your app URL
    and add `<your-url>/auth/callback` to the redirect URLs. Keep "Confirm email" turned on, because team
    invites are matched by email address.
 2. **Stripe:** create a Product with a monthly recurring Price. Add a webhook endpoint at
@@ -28,6 +32,37 @@ A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field
 4. Run `npm install` and then `npm run dev`. Open http://localhost:3000.
 
 For local webhook testing: `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
+
+### Facebook / Instagram lead ads (optional)
+
+1. At developers.facebook.com create an app (type **Business**). Add the **Webhooks** and **Facebook Login for
+   Business** products. Copy the App ID and App Secret into `META_APP_ID` / `META_APP_SECRET`.
+2. Facebook Login → Settings → Valid OAuth Redirect URIs: `https://jetlemon.com/api/meta/callback`.
+3. Webhooks → **Page** → Subscribe to `leadgen`. Callback URL `https://jetlemon.com/api/meta/webhook`,
+   Verify token = whatever you put in `META_VERIFY_TOKEN`.
+4. While the app is in **Development** mode, only people listed as app admins/developers/testers can
+   connect pages — fine for your own business. To let *other* subscribers connect, complete Business
+   Verification and submit `leads_retrieval`, `pages_manage_ads`, `pages_manage_metadata`,
+   `pages_read_engagement` and `pages_show_list` for App Review, then switch the app to **Live**.
+
+Subscribers click **Settings → Connect Facebook**, tick their page(s), and new lead-form submissions
+become leads immediately.
+
+### Texting (optional)
+
+1. Create a Twilio account; put the Account SID and Auth Token in `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN`.
+   Complete A2P 10DLC brand + campaign registration (required for US texting).
+2. Buy a number per business. For each number: Messaging → "A message comes in" →
+   Webhook `https://jetlemon.com/api/sms/inbound` (POST). Then set that number on the business:
+   `update organizations set sms_number = '+12055550142' where id = '<org id>';`
+3. Owners turn on the auto-text and the owner alert under **Settings → Texting**.
+
+### Lead address
+
+Every business has a private lead address shown under **Settings → Lead capture**:
+`POST https://jetlemon.com/api/leads/<token>` with JSON or form fields `name`, `phone`, `email`,
+`address`, `message`, optional `source` (defaults to `website`) and `source_ref` (for de-duplication).
+Any other fields are saved on the lead. A hosted form lives at `https://jetlemon.com/lead/<token>`.
 
 ## Deploy (production: https://jetlemon.com)
 

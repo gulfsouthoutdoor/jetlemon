@@ -1,4 +1,4 @@
-import { Button, Card, ErrorNote, Field, Input, PageHeader, Textarea } from "@/components/ui";
+import { Card, ErrorNote, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { aiConfigured } from "@/lib/ai";
 import { getContext } from "@/lib/org";

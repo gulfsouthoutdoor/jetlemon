@@ -1,4 +1,4 @@
-import { Button, Field, Input, Select, Textarea } from "@/components/ui";
+import { Field, Input, Select, Textarea } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { statusLabel, toLocalInput } from "@/lib/format";
 import { JOB_STATUSES, type Job, type Member } from "@/lib/types";

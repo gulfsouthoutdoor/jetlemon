@@ -30,11 +30,14 @@ export async function POST(request: NextRequest) {
     for (const change of entry.changes ?? []) {
       if (change.field !== "leadgen") continue;
       const { leadgen_id, page_id } = change.value;
-      const { data: page } = await admin.from("meta_pages").select("org_id, access_token, page_name").eq("page_id", page_id).maybeSingle();
-      if (!page) continue; // a page nobody connected
+      const [{ data: page }, { data: tok }] = await Promise.all([
+        admin.from("meta_pages").select("org_id, page_name").eq("page_id", page_id).maybeSingle(),
+        admin.from("meta_page_tokens").select("access_token").eq("page_id", page_id).maybeSingle(),
+      ]);
+      if (!page || !tok) continue; // a page nobody connected
 
       try {
-        const lead = await fetchLead(leadgen_id, page.access_token);
+        const lead = await fetchLead(leadgen_id, tok.access_token);
         const f = mapLeadFields(lead);
         const extra = { ...f.extra };
         if (lead.ad_name) extra["Ad"] = lead.ad_name;

@@ -15,7 +15,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const isOwner = role === "owner";
   const [{ data: members }, { data: invites }, { data: pages }, usage] = await Promise.all([
     supabase.rpc("org_members", { target_org: org.id }),
-    supabase.from("invitations").select("*").eq("org_id", org.id).order("created_at"),
+    supabase.from("invitations").select("*").eq("org_id", org.id).is("accepted_at", null).order("created_at"),
     supabase.from("meta_pages").select("id, org_id, page_id, page_name, connected_at").eq("org_id", org.id).order("connected_at"),
     getTextUsage(supabase, org),
   ]);

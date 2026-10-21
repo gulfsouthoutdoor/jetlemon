@@ -23,9 +23,8 @@ export async function GET(request: NextRequest) {
     const admin = createAdminClient();
     for (const p of pages) {
       await subscribePage(p.id, p.access_token);
-      await admin
-        .from("meta_pages")
-        .upsert({ org_id: org.id, page_id: p.id, page_name: p.name, access_token: p.access_token, connected_by: user.id }, { onConflict: "page_id" });
+      await admin.from("meta_pages").upsert({ org_id: org.id, page_id: p.id, page_name: p.name, connected_by: user.id }, { onConflict: "page_id" });
+      await admin.from("meta_page_tokens").upsert({ page_id: p.id, access_token: p.access_token, updated_at: new Date().toISOString() }, { onConflict: "page_id" });
     }
     const res = back(`Connected ${pages.length} Facebook page${pages.length === 1 ? "" : "s"}.`, true);
     res.cookies.delete("meta_oauth_state");

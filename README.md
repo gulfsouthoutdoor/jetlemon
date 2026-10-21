@@ -23,8 +23,8 @@ A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field
 
 ## Setup
 
-1. **Supabase:** create a project, then run `supabase/migrations/0001_init.sql` and then
-   `0002_leads_meta_sms.sql`, `0003_text_blocks.sql` and `0004_ai_assist.sql` in the SQL editor (or `supabase db push`). Under Authentication → URL Configuration, set the Site URL to your app URL
+1. **Supabase:** create a project, then run `supabase/migrations/0001_schema.sql` in the SQL editor
+   (or `supabase db push`). Production project: `jetlemon-crm` (ref `fymepcdcuhumhcktyeuz`), schema applied 2026-10-21. Under Authentication → URL Configuration, set the Site URL to your app URL
    and add `<your-url>/auth/callback` to the redirect URLs. Keep "Confirm email" turned on, because team
    invites are matched by email address.
 2. **Stripe:** create a Product with a monthly recurring Price. Add a webhook endpoint at
@@ -64,7 +64,7 @@ become leads immediately.
    business's next Stripe invoice automatically — but never beyond the owner's own cap
    (`text_block_limit`, default 2 blocks; owners change it in Settings). At the cap, or when the owner flips
    **Pause all texting**, nothing is sent or billed and the dashboard shows a notice. Blocks need an active
-   paid subscription; trial accounts get the included texts only. Run `0003_text_blocks.sql`.
+   paid subscription; trial accounts get the included texts only.
 
 ### AI assist (optional)
 

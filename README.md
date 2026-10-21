@@ -74,6 +74,13 @@ column-name guesses, setup saves the owner's answers as typed, suggestions and s
 The daily rundown is a plain template (no AI) and runs from the Vercel cron in `vercel.json` once an
 hour; set `CRON_SECRET` in Vercel so only Vercel can trigger it. Owners pick the hour under Settings → Texting.
 
+### Admin page
+
+Set `ADMIN_EMAILS` (comma-separated) in Vercel. Those accounts get an **Admin** link in the sidebar
+and can open `/admin`: every business with plan, status, trial, owner, usage counts, and buttons to
+assign a texting number, comp an account, change plan, extend a trial, pause texting, or delete a
+business. Data comes from the `admin_orgs()` function, which only returns rows to the service role.
+
 ### Lead address
 
 Every business has a private lead address shown under **Settings → Lead capture**:

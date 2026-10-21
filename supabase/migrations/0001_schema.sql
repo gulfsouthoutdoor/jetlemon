@@ -382,3 +382,29 @@ create policy "members manage imports" on public.imports
 alter table public.organizations
   add column plan text not null default 'starter' check (plan in ('starter', 'pro'));
 -- (protect_org_columns() in production also resets new.plan := old.plan for authenticated users.)
+
+-- ───────────────────────── Admin (added 2026-10-21) ─────────────────────────
+-- One row per business for the JetLemon staff page (/admin). Only returns rows when called
+-- with the service role (the app's admin client); anyone else gets an empty result.
+create or replace function public.admin_orgs()
+returns table (
+  id uuid, name text, plan text, subscription_status text, trial_ends_at timestamptz, created_at timestamptz,
+  stripe_customer_id text, stripe_subscription_id text, sms_number text, texting_paused boolean, setup_done boolean,
+  owner_email text, members integer, customers integer, jobs integer, texts_this_month integer, last_seen timestamptz
+)
+language sql stable security definer set search_path = public as $$
+  select o.id, o.name, o.plan, o.subscription_status, o.trial_ends_at, o.created_at,
+    o.stripe_customer_id, o.stripe_subscription_id, o.sms_number, o.texting_paused, o.setup_done,
+    (select u.email from memberships m join auth.users u on u.id = m.user_id
+      where m.org_id = o.id and m.role = 'owner' order by m.created_at limit 1)::text,
+    (select count(*) from memberships m where m.org_id = o.id)::int,
+    (select count(*) from customers c where c.org_id = o.id)::int,
+    (select count(*) from jobs j where j.org_id = o.id)::int,
+    (select count(*) from messages x where x.org_id = o.id and x.direction = 'out' and x.status = 'sent'
+      and x.created_at >= date_trunc('month', now()))::int,
+    (select max(u.last_sign_in_at) from memberships m join auth.users u on u.id = m.user_id where m.org_id = o.id)
+  from organizations o
+  where coalesce(current_setting('request.jwt.claim.role', true),
+                 current_setting('request.jwt.claims', true)::jsonb ->> 'role') = 'service_role'
+  order by o.created_at desc;
+$$;

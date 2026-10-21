@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { logout } from "@/app/login/actions";
+import { isAdminEmail } from "@/lib/admin";
 import { Logo } from "./auth-shell";
 import { NavLinks } from "./nav-links";
 import type { Organization } from "@/lib/types";
@@ -24,6 +25,11 @@ export function AppShell({ org, email, children }: { org: Organization; email: s
           {org.subscription_status === "trialing" && (
             <Link href="/billing" className="block rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 hover:bg-amber-100">
               {trialDaysLeft > 0 ? `${trialDaysLeft} days left in trial` : "Trial ended"} · <span className="font-medium">Upgrade</span>
+            </Link>
+          )}
+          {isAdminEmail(email) && (
+            <Link href="/admin" className="block text-sm font-medium text-slate-700 hover:text-slate-900">
+              Admin
             </Link>
           )}
           <form action={logout}>

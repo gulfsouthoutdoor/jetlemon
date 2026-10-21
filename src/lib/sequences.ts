@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { emailConfigured, sendEmail, unsubscribeUrl } from "@/lib/email";
 import { dayKey, fromLocalInput, invoiceTotal, money } from "@/lib/format";
 import { sendBusinessText } from "@/lib/texting";
+import { hasFollowUps } from "@/lib/stripe";
 import type { Customer, Organization } from "@/lib/types";
 
 /**
@@ -134,7 +135,7 @@ export type EnrollTarget = { customerId: string | null | undefined; jobId?: stri
  * Day-0 steps are sent right away, so pass the admin client when the caller can.
  */
 export async function enroll(db: SupabaseClient, org: Organization, key: SequenceKey, target: EnrollTarget) {
-  if (!target.customerId) return;
+  if (!target.customerId || !hasFollowUps(org)) return;
   const seq = await loadSequence(db, org.id, key);
   if (!seq.enabled || !seq.steps.length) return;
   const steps = seq.steps;
@@ -214,6 +215,10 @@ async function processRun(db: SupabaseClient, run: RunRow): Promise<"sent" | "sk
   }
   if (!seq.enabled) {
     await finish("stopped", "follow-up switched off");
+    return "stopped";
+  }
+  if (!hasFollowUps(org)) {
+    await finish("stopped", "follow-ups need the Pro plan");
     return "stopped";
   }
   const steps = seq.steps;

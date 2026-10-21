@@ -1,4 +1,5 @@
-import { Button, Card, Field, Input, Select, Textarea } from "@/components/ui";
+import { Button, ButtonLink, Card, Field, Input, Select, Textarea } from "@/components/ui";
+import { PLANS } from "@/lib/stripe";
 import { SubmitButton } from "@/components/submit-button";
 import { emailConfigured } from "@/lib/email";
 import { MAX_STEPS, MERGE_FIELDS, SEND_HOUR, SEQUENCE_INFO, type Sequence } from "@/lib/sequences";
@@ -9,12 +10,22 @@ export function FollowUpsCard({ org, sequences, isOwner, texting }: { org: Organ
   return (
     <div id="followups">
       <Card title="Follow-ups">
+        {!texting && (
+          <div className="mb-4 rounded-md border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
+            <p className="font-medium">Follow-ups are part of the Pro plan.</p>
+            <p className="mt-1">Every new lead gets a text and an email right away and again on days 1, 3 and 7 — plus thank-you, review and unpaid-invoice follow-ups — ${PLANS.pro.price}/month. Unlimited emails, 500 texts included.</p>
+            {isOwner && (
+              <ButtonLink href="/billing" className="mt-3">
+                Upgrade to Pro
+              </ButtonLink>
+            )}
+          </div>
+        )}
         <p className="mb-4 text-sm text-slate-600">
           Automatic texts and emails that go out on their own and stop on their own. Day 0 goes the moment the lead arrives; later days go at {SEND_HOUR} AM your time. Save with an empty row to add another step (up to {MAX_STEPS}).
-          {!texting && " Text steps need the Pro plan — email steps work on every plan."}
           {!emailConfigured() && " Email isn't switched on for this server yet, so email steps will be skipped."}
         </p>
-        <div className="space-y-6">
+        <div className={`space-y-6 ${texting ? "" : "pointer-events-none opacity-50"}`}>
           {sequences.map((seq) => {
             const info = SEQUENCE_INFO[seq.key];
             const rows = [...seq.steps, ...(seq.steps.length < MAX_STEPS ? [null] : [])];

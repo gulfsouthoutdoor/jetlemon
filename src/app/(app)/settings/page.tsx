@@ -7,7 +7,7 @@ import { metaConfigured } from "@/lib/meta";
 import { getContext } from "@/lib/org";
 import { smsConfigured } from "@/lib/sms";
 import { getTextUsage } from "@/lib/texting";
-import { hasTexting } from "@/lib/stripe";
+import { PLANS, hasTexting } from "@/lib/stripe";
 import { getSequences } from "@/lib/sequences";
 import { FollowUpsCard } from "@/components/follow-ups-card";
 import type { Member, MetaPage } from "@/lib/types";
@@ -133,7 +133,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           {!hasTexting(org) && (
             <div className="mb-4 rounded-md border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
               <p className="font-medium">Texting is part of the Pro plan.</p>
-              <p className="mt-1">Your own number, an automatic text to every new lead, two-way texting, lead alerts and a daily rundown — $49/month, 500 texts included.</p>
+              <p className="mt-1">Your own number, automatic text + email follow-ups, two-way texting, lead alerts and a daily rundown — ${PLANS.pro.price}/month, 500 texts included, unlimited emails.</p>
               {isOwner && (
                 <ButtonLink href="/billing" className="mt-3">
                   Upgrade to Pro

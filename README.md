@@ -28,7 +28,7 @@ A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field
    and add `<your-url>/auth/callback` to the redirect URLs. Keep "Confirm email" turned on, because team
    invites are matched by email address.
 2. **Stripe:** create two Products, each with a monthly recurring Price — Starter ($29, `STRIPE_PRICE_ID`) and
-   Pro ($49, `STRIPE_PRO_PRICE_ID`). Pro unlocks texting; trials get Pro features. Add a webhook endpoint at
+   Pro ($59, `STRIPE_PRO_PRICE_ID`; older Pro prices go in `STRIPE_PRO_PRICE_IDS_LEGACY`). Pro unlocks texting and the text + email follow-ups; trials get Pro features. Add a webhook endpoint at
    `<your-url>/api/stripe/webhook` for these events: `checkout.session.completed`,
    `customer.subscription.created`, `customer.subscription.updated` and `customer.subscription.deleted`.
    Enable the Customer Portal in Stripe settings.

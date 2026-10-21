@@ -24,24 +24,27 @@ export const PLANS: Record<PlanKey, { key: PlanKey; name: string; price: number;
   pro: {
     key: "pro",
     name: "Pro",
-    price: Number(process.env.NEXT_PUBLIC_PRO_PRICE ?? 49),
+    price: Number(process.env.NEXT_PUBLIC_PRO_PRICE ?? 59),
     priceId: process.env.STRIPE_PRO_PRICE_ID ?? "",
-    blurb: "Starter plus texting, so leads hear back in seconds.",
+    blurb: "Starter plus texting and automatic follow-ups, so no lead goes cold.",
     features: [
       "Everything in Starter",
       "Your own texting number",
-      "Automatic text to every new lead",
+      "Automatic text + email follow-ups: new leads, after the job, unpaid invoices",
       "Two-way texting from the customer page",
       "New-lead alerts and a daily rundown to your phone",
-      "500 texts a month included, then $10 per 250",
+      "500 texts a month included, then $10 per 250 · unlimited emails",
     ],
   },
 };
 
+/** Prices that still map to Pro after a price change (comma-separated), so older subscribers keep their plan. */
+const legacyProPrices = (process.env.STRIPE_PRO_PRICE_IDS_LEGACY ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+
 /** Which plan a Stripe price belongs to. */
 export function planForPrice(priceId: string | null | undefined): PlanKey | null {
   if (!priceId) return null;
-  if (priceId === PLANS.pro.priceId) return "pro";
+  if (priceId === PLANS.pro.priceId || legacyProPrices.includes(priceId)) return "pro";
   if (priceId === PLANS.starter.priceId) return "starter";
   return null;
 }
@@ -57,6 +60,8 @@ export const isComplimentary = (org: Pick<Organization, "subscription_status" | 
   org.subscription_status === "active" && !org.stripe_subscription_id;
 
 export const hasTexting = (org: Pick<Organization, "plan" | "subscription_status">) => effectivePlan(org) === "pro";
+/** Automatic text + email follow-ups are part of Pro (emails included, no cap). */
+export const hasFollowUps = hasTexting;
 
 /** Kept for older imports. */
 export const PLAN = PLANS.starter;

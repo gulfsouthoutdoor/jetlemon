@@ -27,7 +27,7 @@ export default async function ImportPage({ searchParams }: { searchParams: Promi
             />
             <p className="text-sm text-slate-500">
               CSV or Excel. Works with exports from GoHighLevel, Jobber, Housecall Pro, QuickBooks, Google Contacts, or any sheet you made yourself — column names don&apos;t
-              have to match anything. Up to 5,000 rows per sheet.
+              have to match anything. Up to 5,000 rows per sheet and 4 MB per file.
             </p>
             <Button>Upload and review</Button>
             {!aiConfigured() && <p className="text-xs text-slate-500">AI matching is off on this server; columns will be guessed from their names.</p>}

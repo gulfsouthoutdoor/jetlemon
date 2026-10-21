@@ -10,7 +10,7 @@ export async function uploadFile(fd: FormData) {
   const { supabase, org, user } = await getContext();
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0) redirect("/import?error=Choose+a+file+first");
-  if (file.size > 10 * 1024 * 1024) redirect("/import?error=That+file+is+over+10+MB");
+  if (file.size > 4 * 1024 * 1024) redirect("/import?error=That+file+is+over+4+MB.+Split+it+into+smaller+files+or+remove+unused+columns.");
 
   let sheets: Sheet[];
   try {

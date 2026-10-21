@@ -6,7 +6,7 @@ import { setNewPassword } from "@/app/login/actions";
 export default async function ResetPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
   return (
-    <AuthShell title="Choose a new password">
+    <AuthShell title="Choose a new password" footer={null}>
       <form action={setNewPassword} className="space-y-4">
         <ErrorNote message={error} />
         <Field label="New password">

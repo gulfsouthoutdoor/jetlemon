@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { dayKey, fromLocalInput, invoiceTotal, isOverdue, money, time } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendBusinessText } from "@/lib/texting";
+import { hasTexting } from "@/lib/stripe";
 import type { Invoice, Job, Organization } from "@/lib/types";
 
 // Runs every hour (vercel.json). For each business whose local clock just hit their brief hour,
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
   for (const org of (orgs ?? []) as Organization[]) {
     const today = dayKey(now, org.timezone);
     const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: org.timezone, hour: "numeric", hourCycle: "h23" }).format(now));
-    if (hour !== org.daily_brief_hour || org.daily_brief_sent_on === today) continue;
+    if (hour !== org.daily_brief_hour || org.daily_brief_sent_on === today || !hasTexting(org)) continue;
 
     const start = fromLocalInput(`${today}T00:00`, org.timezone)!;
     const end = new Date(new Date(start).getTime() + 86_400_000).toISOString();

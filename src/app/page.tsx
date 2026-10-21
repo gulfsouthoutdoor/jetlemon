@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/auth-shell";
 import { ButtonLink } from "@/components/ui";
-import { PLAN } from "@/lib/stripe";
+import { PLANS } from "@/lib/stripe";
 
 const features = [
   { title: "Customer database", body: "Every client's contact info, service address, gate codes and history in one place." },
@@ -52,18 +52,33 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-md px-6 py-20 text-center">
-        <h2 className="text-3xl font-bold text-slate-900">One simple price</h2>
-        <div className="mt-8 rounded-xl border border-slate-200 p-8 shadow-sm">
-          <p className="text-5xl font-bold text-slate-900">
-            ${PLAN.price}
-            <span className="text-lg font-normal text-slate-500">/month</span>
-          </p>
-          <p className="mt-2 text-slate-600">Everything included. Unlimited users. Cancel anytime.</p>
-          <ButtonLink href="/signup" className="mt-6 w-full py-3">
-            Try it free for 14 days
-          </ButtonLink>
+      <section className="mx-auto max-w-4xl px-6 py-20 text-center">
+        <h2 className="text-3xl font-bold text-slate-900">Two plans. No add-on menu.</h2>
+        <p className="mt-2 text-slate-600">Unlimited users on both. Cancel anytime.</p>
+        <div className="mt-8 grid gap-6 text-left sm:grid-cols-2">
+          {(["starter", "pro"] as const).map((key) => {
+            const p = PLANS[key];
+            return (
+              <div key={key} className={`rounded-xl border p-8 shadow-sm ${key === "pro" ? "border-indigo-300 ring-1 ring-indigo-200" : "border-slate-200"}`}>
+                <p className={`text-sm font-semibold ${key === "pro" ? "text-indigo-600" : "text-slate-700"}`}>{p.name}</p>
+                <p className="mt-1 text-5xl font-bold text-slate-900">
+                  ${p.price}
+                  <span className="text-lg font-normal text-slate-500">/month</span>
+                </p>
+                <p className="mt-2 text-slate-600">{p.blurb}</p>
+                <ul className="mt-5 space-y-1.5 text-sm text-slate-600">
+                  {p.features.map((f) => (
+                    <li key={f}>✓ {f}</li>
+                  ))}
+                </ul>
+                <ButtonLink href="/signup" variant={key === "pro" ? "primary" : "secondary"} className="mt-6 w-full py-3">
+                  Try it free for 14 days
+                </ButtonLink>
+              </div>
+            );
+          })}
         </div>
+        <p className="mt-4 text-sm text-slate-500">Every trial includes Pro. No credit card required.</p>
       </section>
 
       <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-500">© {new Date().getFullYear()} JetLemon</footer>

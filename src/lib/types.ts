@@ -9,6 +9,7 @@ export type Organization = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   subscription_status: string;
+  plan: "starter" | "pro";
   inbound_token: string;
   sms_number: string | null;
   notify_phone: string | null;

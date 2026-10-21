@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { dayKey, fromLocalInput } from "@/lib/format";
 import { sendSms } from "@/lib/sms";
-import { stripe } from "@/lib/stripe";
+import { hasTexting, stripe } from "@/lib/stripe";
 import type { Organization } from "@/lib/types";
 
 /** 'YYYY-MM' for right now in the business's time zone, plus the UTC instant the month started. */
@@ -78,6 +78,10 @@ export async function sendBusinessText(admin: SupabaseClient, org: Organization,
       sent_by: t.sentBy ?? null,
     });
 
+  if (!hasTexting(org)) {
+    await log("blocked: texting needs the Pro plan");
+    return { ok: false, reason: "Texting is part of the Pro plan. Upgrade under Billing." };
+  }
   if (!org.sms_number) return { ok: false, reason: "This business has no texting number." };
   if (org.texting_paused) {
     await log("blocked: texting paused");

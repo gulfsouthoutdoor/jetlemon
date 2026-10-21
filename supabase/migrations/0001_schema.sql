@@ -268,6 +268,7 @@ begin
     new.stripe_customer_id := old.stripe_customer_id;
     new.stripe_subscription_id := old.stripe_subscription_id;
     new.subscription_status := old.subscription_status;
+    new.plan := old.plan;
     new.created_at := old.created_at;
     new.inbound_token := old.inbound_token;
     new.sms_number := old.sms_number;
@@ -375,3 +376,9 @@ create index on public.imports (org_id, created_at desc);
 alter table public.imports enable row level security;
 create policy "members manage imports" on public.imports
   for all using (public.is_member(org_id)) with check (public.is_member(org_id));
+
+-- ───────────────────────── Plans (added 2026-10-21) ─────────────────────────
+-- starter: the office. pro: adds texting. Trials behave as pro. Set by the Stripe webhook; protected from users.
+alter table public.organizations
+  add column plan text not null default 'starter' check (plan in ('starter', 'pro'));
+-- (protect_org_columns() in production also resets new.plan := old.plan for authenticated users.)

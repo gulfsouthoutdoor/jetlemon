@@ -6,6 +6,7 @@ import { dateTime, invoiceTotal, money } from "@/lib/format";
 import type { Customer, Invoice, Job, Message } from "@/lib/types";
 import { TextComposer } from "@/components/text-composer";
 import { aiConfigured } from "@/lib/ai";
+import { hasTexting } from "@/lib/stripe";
 import { addNote, deleteCustomer, deleteNote, sendText, suggestReplies, updateCustomer } from "../actions";
 import { CustomerForm } from "../customer-form";
 
@@ -73,8 +74,8 @@ export default async function CustomerPage({ params, searchParams }: { params: P
             <TextComposer
               sendAction={sendText.bind(null, c.id)}
               suggestAction={suggestReplies.bind(null, c.id)}
-              disabled={!org.sms_number || !c.phone}
-              placeholder={org.sms_number ? "Type a text…" : "Texting needs a number — see Settings"}
+              disabled={!hasTexting(org) || !org.sms_number || !c.phone}
+              placeholder={!hasTexting(org) ? "Texting is part of the Pro plan — see Billing" : org.sms_number ? "Type a text…" : "Texting needs a number — see Settings"}
               aiOn={aiConfigured()}
             />
           </Card>

@@ -118,6 +118,16 @@ fill in the platform profile) with the same account whose secret key is in `STRI
 `/privacy`, `/terms` and `/sms-terms` are plain-language pages the Twilio (10DLC) and Meta reviews ask for.
 `LEGAL_ENTITY`, `LEGAL_ADDRESS` and `LEGAL_EMAIL` fill in the operator; the date is in `legal-page.tsx`.
 
+### Proposals
+
+A priced offer the customer accepts online. Build it under **Proposals** (lines, optional add-ons,
+intro, terms, good-until date, optional deposit %; "Draft it with AI" writes lines and intro from a
+one-line brief, never prices). Mark as sent → the customer's private link `/p/<token>` lets them tick
+options, see the total move, type their name to accept (name, time and IP are recorded) or decline
+with a reason. Accepting stops the "Proposal sent" follow-ups and texts/emails the owner; a deposit is
+collected through the same Stripe Connect checkout as invoices. Accepted → one click makes the job
+(scheduled, priced) and the invoice (accepted lines minus a paid deposit).
+
 ### Admin page
 
 Set `ADMIN_EMAILS` (comma-separated) in Vercel. Those accounts get an **Admin** link in the sidebar

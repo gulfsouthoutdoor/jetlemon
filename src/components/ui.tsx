@@ -105,6 +105,9 @@ const badgeColors: Record<string, string> = {
   paid: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   void: "bg-slate-100 text-slate-500 ring-slate-200",
   overdue: "bg-red-50 text-red-700 ring-red-200",
+  accepted: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  declined: "bg-red-50 text-red-700 ring-red-200",
+  expired: "bg-slate-100 text-slate-500 ring-slate-200",
 };
 
 export function Badge({ status }: { status: string }) {

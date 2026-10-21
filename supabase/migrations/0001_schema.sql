@@ -423,7 +423,7 @@ alter table public.messages add column if not exists channel text not null defau
 create table public.sequences (
   id uuid primary key default gen_random_uuid(),
   org_id uuid not null references public.organizations(id) on delete cascade,
-  key text not null check (key in ('new_lead', 'after_job', 'unpaid_invoice')),
+  key text not null check (key in ('new_lead', 'proposal', 'after_job', 'unpaid_invoice')),
   enabled boolean not null default false,
   steps jsonb not null default '[]',
   updated_at timestamptz not null default now(),
@@ -482,3 +482,88 @@ language sql stable security definer set search_path = public as $$
   where i.pay_token = token and i.status <> 'draft';
 $$;
 grant execute on function public.invoice_by_pay_token(text) to anon, authenticated;
+
+-- ───────────────────────── Proposals (added 2026-10-21) ─────────────────────────
+-- A priced offer the customer accepts online (types name), with optional add-ons and an optional deposit.
+create table public.proposals (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.organizations(id) on delete cascade,
+  customer_id uuid references public.customers(id) on delete set null,
+  job_id uuid references public.jobs(id) on delete set null,
+  invoice_id uuid references public.invoices(id) on delete set null,
+  number integer not null,
+  status text not null default 'draft' check (status in ('draft', 'sent', 'accepted', 'declined', 'expired')),
+  title text not null default '',
+  intro text,
+  terms text,
+  valid_until date,
+  deposit_percent integer not null default 0 check (deposit_percent between 0 and 100),
+  pay_token text not null default encode(extensions.gen_random_bytes(16), 'hex'),
+  sent_at timestamptz,
+  accepted_at timestamptz,
+  accepted_name text,
+  accepted_ip text,
+  declined_at timestamptz,
+  decline_reason text,
+  stripe_checkout_session_id text,
+  deposit_paid_on date,
+  created_at timestamptz not null default now(),
+  unique (org_id, number)
+);
+create unique index proposals_pay_token on public.proposals (pay_token);
+create index proposals_org_status on public.proposals (org_id, status);
+
+create table public.proposal_items (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.organizations(id) on delete cascade,
+  proposal_id uuid not null references public.proposals(id) on delete cascade,
+  description text not null,
+  quantity numeric(10, 2) not null default 1,
+  unit_price numeric(12, 2) not null default 0,
+  optional boolean not null default false,   -- customer may tick it on
+  selected boolean not null default true,    -- what they chose (set on acceptance)
+  created_at timestamptz not null default now()
+);
+create index proposal_items_proposal on public.proposal_items (proposal_id);
+
+-- Auto-number proposals per org, starting at 101.
+create or replace function public.set_proposal_number()
+returns trigger language plpgsql as $$
+begin
+  if new.number is null then
+    perform pg_advisory_xact_lock(hashtext(new.org_id::text || ':proposal'));
+    select coalesce(max(number), 100) + 1 into new.number from public.proposals where org_id = new.org_id;
+  end if;
+  return new;
+end;
+$$;
+create trigger proposals_set_number before insert on public.proposals for each row execute function public.set_proposal_number();
+
+alter table public.proposals enable row level security;
+alter table public.proposal_items enable row level security;
+create policy "members manage proposals" on public.proposals for all using (public.is_member(org_id)) with check (public.is_member(org_id));
+create policy "members manage proposal items" on public.proposal_items for all using (public.is_member(org_id)) with check (public.is_member(org_id));
+
+alter table public.sequence_runs add column proposal_id uuid references public.proposals(id) on delete cascade;
+create unique index sequence_runs_one_per_proposal on public.sequence_runs (proposal_id, sequence_key) where proposal_id is not null;
+
+-- Public proposal lookup by link (no login).
+create or replace function public.proposal_by_token(token text)
+returns table (id uuid, org_id uuid, number integer, status text, title text, intro text, terms text, valid_until date,
+  deposit_percent integer, accepted_at timestamptz, accepted_name text, declined_at timestamptz, deposit_paid_on date, stripe_checkout_session_id text,
+  business_name text, business_phone text, business_email text, business_address text, business_website text, pay_online boolean, charges_enabled boolean, stripe_account_id text,
+  customer_id uuid, customer_name text, customer_email text, customer_address text, items jsonb)
+language sql stable security definer set search_path = public as $$
+  select p.id, p.org_id, p.number, p.status, p.title, p.intro, p.terms, p.valid_until,
+    p.deposit_percent, p.accepted_at, p.accepted_name, p.declined_at, p.deposit_paid_on, p.stripe_checkout_session_id,
+    o.name, o.phone, o.email, o.address, o.website, o.pay_online, o.stripe_charges_enabled, o.stripe_account_id,
+    c.id, c.name, c.email, c.address,
+    coalesce((select jsonb_agg(jsonb_build_object('id', x.id, 'description', x.description, 'quantity', x.quantity, 'unit_price', x.unit_price, 'optional', x.optional, 'selected', x.selected) order by x.created_at)
+              from proposal_items x where x.proposal_id = p.id), '[]'::jsonb)
+  from proposals p join organizations o on o.id = p.org_id left join customers c on c.id = p.customer_id
+  where p.pay_token = token and p.status <> 'draft';
+$$;
+grant execute on function public.proposal_by_token(text) to anon, authenticated;
+-- Production note: sequences_key_check predates 'proposal'; run in the SQL editor once:
+--   alter table public.sequences drop constraint sequences_key_check;
+--   alter table public.sequences add constraint sequences_key_check check (key in ('new_lead','proposal','after_job','unpaid_invoice'));

@@ -38,6 +38,9 @@ export default async function CustomerPage({ params, searchParams }: { params: P
         actions={
           <>
             <ButtonLink href={`/jobs/new?customer=${c.id}`}>New job</ButtonLink>
+            <ButtonLink variant="secondary" href={`/proposals/new?customer=${c.id}`}>
+              New proposal
+            </ButtonLink>
             <ButtonLink variant="secondary" href={`/invoices/new?customer=${c.id}`}>
               New invoice
             </ButtonLink>

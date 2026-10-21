@@ -119,3 +119,43 @@ export type InvoiceItem = {
 };
 
 export type Member = { user_id: string; email: string; role: string; created_at: string };
+
+export const PROPOSAL_STATUSES = ["draft", "sent", "accepted", "declined", "expired"] as const;
+export type ProposalStatus = (typeof PROPOSAL_STATUSES)[number];
+
+export type Proposal = {
+  id: string;
+  org_id: string;
+  customer_id: string | null;
+  job_id: string | null;
+  invoice_id: string | null;
+  number: number;
+  status: ProposalStatus;
+  title: string;
+  intro: string | null;
+  terms: string | null;
+  valid_until: string | null;
+  deposit_percent: number;
+  pay_token: string;
+  sent_at: string | null;
+  accepted_at: string | null;
+  accepted_name: string | null;
+  declined_at: string | null;
+  decline_reason: string | null;
+  stripe_checkout_session_id: string | null;
+  deposit_paid_on: string | null;
+  created_at: string;
+  customers?: { id: string; name: string; email: string | null; phone: string | null; address: string | null } | null;
+  proposal_items?: ProposalItem[];
+};
+
+export type ProposalItem = {
+  id: string;
+  proposal_id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  optional: boolean;
+  selected: boolean;
+  created_at: string;
+};

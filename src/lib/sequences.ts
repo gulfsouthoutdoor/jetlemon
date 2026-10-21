@@ -4,6 +4,7 @@ import { dayKey, fromLocalInput, invoiceTotal, money } from "@/lib/format";
 import { sendBusinessText } from "@/lib/texting";
 import { hasFollowUps } from "@/lib/stripe";
 import { payUrl } from "@/lib/payments";
+import { isExpired, proposalTotal, proposalUrl } from "@/lib/proposals";
 import type { Customer, Organization } from "@/lib/types";
 
 /**
@@ -11,18 +12,19 @@ import type { Customer, Organization } from "@/lib/types";
  * sent N days after the trigger, at 9 AM in the business's time zone (day 0 goes right away).
  * A run stops on its own when the customer replies or the job/invoice moves on.
  */
-export const SEQUENCE_KEYS = ["new_lead", "after_job", "unpaid_invoice"] as const;
+export const SEQUENCE_KEYS = ["new_lead", "proposal", "after_job", "unpaid_invoice"] as const;
 export type SequenceKey = (typeof SEQUENCE_KEYS)[number];
 export type Channel = "text" | "email";
 export type Step = { day: number; channel: Channel; subject: string; body: string };
 export type Sequence = { key: SequenceKey; enabled: boolean; steps: Step[]; custom: boolean };
 export const MAX_STEPS = 8;
 /** Sequences that run without the owner touching anything. */
-export const DEFAULT_ENABLED: Record<SequenceKey, boolean> = { new_lead: true, after_job: false, unpaid_invoice: false };
+export const DEFAULT_ENABLED: Record<SequenceKey, boolean> = { new_lead: true, proposal: true, after_job: false, unpaid_invoice: false };
 export const SEND_HOUR = 9;
 
 export const SEQUENCE_INFO: Record<SequenceKey, { name: string; trigger: string; stops: string }> = {
   new_lead: { name: "New lead", trigger: "a new lead comes in (text + email right away, then days 1, 3 and 7)", stops: "they reply, or the job is scheduled or cancelled" },
+  proposal: { name: "Proposal sent", trigger: "a proposal is sent", stops: "they accept or decline, it expires, or they reply" },
   after_job: { name: "After the job", trigger: "a job is marked completed", stops: "they reply" },
   unpaid_invoice: { name: "Unpaid invoice", trigger: "an invoice is sent", stops: "it's paid or voided, or they reply" },
 };
@@ -58,6 +60,22 @@ export const DEFAULT_STEPS: Record<SequenceKey, Step[]> = {
       body: "Hi {first_name},\n\nThis is our last check-in from {business}. If now isn't the right time, no problem at all — this email will be here whenever you're ready, and so will we.\n\nAll the best,\n{business}",
     },
   ],
+  proposal: [
+    { day: 1, channel: "text", subject: "", body: "Hi {first_name}, {business} here. Any questions on the proposal we sent? You can review and accept it here: {proposal_link}" },
+    {
+      day: 1,
+      channel: "email",
+      subject: "Questions on your proposal, {first_name}?",
+      body: "Hi {first_name},\n\nJust checking you got proposal #{proposal_number} from {business} ({amount}). You can look it over and accept it here:\n\n{proposal_link}\n\nReply to this email or call {phone} with any questions.\n\nThanks,\n{business}",
+    },
+    { day: 3, channel: "text", subject: "", body: "Hi {first_name}, want to get your project on the calendar? Accept the proposal here and we'll schedule it: {proposal_link}" },
+    {
+      day: 7,
+      channel: "email",
+      subject: "Your proposal from {business}",
+      body: "Hi {first_name},\n\nLast check-in on proposal #{proposal_number}. If the timing or the price isn't right, just reply and tell us — we're happy to adjust. Otherwise you can accept it any time here:\n\n{proposal_link}\n\nThanks,\n{business}",
+    },
+  ],
   after_job: [
     { day: 0, channel: "text", subject: "", body: "Thanks for choosing {business}, {first_name}! If anything isn't right, reply here and we'll take care of it." },
     {
@@ -86,6 +104,7 @@ export const DEFAULT_STEPS: Record<SequenceKey, Step[]> = {
 
 export const MERGE_FIELDS: Record<SequenceKey, string[]> = {
   new_lead: ["{first_name}", "{name}", "{business}", "{phone}"],
+  proposal: ["{first_name}", "{name}", "{business}", "{phone}", "{proposal_number}", "{amount}", "{proposal_link}"],
   after_job: ["{first_name}", "{name}", "{business}", "{phone}", "{review_link}"],
   unpaid_invoice: ["{first_name}", "{name}", "{business}", "{phone}", "{invoice_number}", "{amount}", "{pay_link}"],
 };
@@ -128,7 +147,7 @@ async function loadSequence(db: SupabaseClient, orgId: string, key: SequenceKey)
   return data ? { enabled: data.enabled as boolean, steps: cleanSteps(data.steps) } : { enabled: DEFAULT_ENABLED[key], steps: DEFAULT_STEPS[key] };
 }
 
-export type EnrollTarget = { customerId: string | null | undefined; jobId?: string | null; invoiceId?: string | null };
+export type EnrollTarget = { customerId: string | null | undefined; jobId?: string | null; invoiceId?: string | null; proposalId?: string | null };
 
 /**
  * Starts a run if the business has this sequence switched on. Safe to call twice for the same job or
@@ -150,6 +169,7 @@ export async function enroll(db: SupabaseClient, org: Organization, key: Sequenc
       customer_id: target.customerId,
       job_id: target.jobId ?? null,
       invoice_id: target.invoiceId ?? null,
+      proposal_id: target.proposalId ?? null,
       step: 0,
       next_at: stepTime(steps[0], now, org.timezone),
       started_at: now.toISOString(),
@@ -161,11 +181,12 @@ export async function enroll(db: SupabaseClient, org: Organization, key: Sequenc
 }
 
 /** Stops every active run for a customer (reply), a job (status change) or an invoice (paid/void). */
-export async function stopRuns(db: SupabaseClient, where: { customerId?: string; jobId?: string; invoiceId?: string; key?: SequenceKey }, reason: string) {
+export async function stopRuns(db: SupabaseClient, where: { customerId?: string; jobId?: string; invoiceId?: string; proposalId?: string; key?: SequenceKey }, reason: string) {
   let q = db.from("sequence_runs").update({ status: "stopped", stop_reason: reason, updated_at: new Date().toISOString() }).eq("status", "active");
   if (where.customerId) q = q.eq("customer_id", where.customerId);
   if (where.jobId) q = q.eq("job_id", where.jobId);
   if (where.invoiceId) q = q.eq("invoice_id", where.invoiceId);
+  if (where.proposalId) q = q.eq("proposal_id", where.proposalId);
   if (where.key) q = q.eq("sequence_key", where.key);
   await q;
 }
@@ -177,6 +198,7 @@ type RunRow = {
   customer_id: string;
   job_id: string | null;
   invoice_id: string | null;
+  proposal_id: string | null;
   step: number;
   next_at: string;
   started_at: string;
@@ -267,6 +289,16 @@ async function processRun(db: SupabaseClient, run: RunRow): Promise<"sent" | "sk
     vars.invoice_number = String(inv.number);
     vars.amount = money(invoiceTotal(inv));
     vars.pay_link = payUrl(inv.pay_token);
+  }
+  if (run.proposal_id) {
+    const { data: p } = await db.from("proposals").select("number, status, title, valid_until, pay_token, proposal_items(quantity, unit_price, optional, selected)").eq("id", run.proposal_id).maybeSingle();
+    if (!p || p.status !== "sent" || isExpired(p)) {
+      await finish("stopped", p ? (p.status === "sent" ? "proposal expired" : `proposal ${p.status}`) : "proposal removed");
+      return "stopped";
+    }
+    vars.proposal_number = String(p.number);
+    vars.amount = money(proposalTotal(p.proposal_items ?? []));
+    vars.proposal_link = proposalUrl(p.pay_token);
   }
 
   // Send this step.

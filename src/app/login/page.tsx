@@ -27,6 +27,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <Field label="Password">
           <Input name="password" type="password" required autoComplete="current-password" />
         </Field>
+        <p className="text-right text-sm">
+          <Link href="/forgot" className="text-slate-500 hover:text-indigo-600">
+            Forgot your password?
+          </Link>
+        </p>
         <Button className="w-full">Sign in</Button>
       </form>
     </AuthShell>

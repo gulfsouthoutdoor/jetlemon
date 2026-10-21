@@ -12,7 +12,7 @@ export function AppShell({ org, email, children }: { org: Organization; email: s
     <div className="min-h-screen bg-slate-50 md:flex">
       <aside className="border-b border-slate-200 bg-white md:fixed md:inset-y-0 md:flex md:w-60 md:flex-col md:border-b-0 md:border-r print:hidden">
         <div className="flex items-center gap-2 px-4 py-4">
-          <Logo />
+          <Logo className="h-9 w-9" />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-slate-900">{org.name}</p>
             <p className="truncate text-xs text-slate-500">{email}</p>

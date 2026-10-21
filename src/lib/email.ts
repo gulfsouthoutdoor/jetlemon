@@ -41,6 +41,7 @@ ${paras}
 ${e.footer ? `<p style="margin:18px 0 0;padding-top:12px;border-top:1px solid #e2e8f0;color:#475569;font-size:13px;line-height:1.5">${esc(e.footer).replace(/\n/g, "<br>")}</p>` : ""}
 </div>
 ${e.unsubscribe ? `<p style="max-width:560px;margin:12px auto 0;color:#94a3b8;font-size:12px;text-align:center">Don't want these emails? <a href="${e.unsubscribe}" style="color:#94a3b8">Stop them here</a>.</p>` : ""}
+<p style="max-width:560px;margin:10px auto 0;color:#cbd5e1;font-size:11px;text-align:center"><img src="${siteUrl()}/logo-96.png" width="14" height="14" alt="" style="vertical-align:-2px;margin-right:4px">Sent with JetLemon</p>
 </body></html>`;
 }
 

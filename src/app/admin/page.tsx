@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/auth-shell";
 import { Badge, Button, ErrorNote, Input, Select } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { requireAdmin, type AdminOrg } from "@/lib/admin";
@@ -28,8 +29,8 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white px-6 py-3">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <p className="text-sm font-semibold text-slate-900">
-            JetLemon <span className="rounded bg-slate-900 px-1.5 py-0.5 text-xs text-white">Admin</span>
+          <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <Wordmark className="h-7" /> <span className="rounded bg-slate-900 px-1.5 py-0.5 text-xs text-white">Admin</span>
           </p>
           <Link href="/dashboard" className="text-sm text-slate-500 hover:text-slate-900">
             ← Back to the app

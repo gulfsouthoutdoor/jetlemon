@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Logo } from "./auth-shell";
+import { Wordmark } from "./auth-shell";
 
 /** The operator named on the legal pages. Set LEGAL_ENTITY / LEGAL_ADDRESS in Vercel once decided. */
 export const LEGAL = {
@@ -14,8 +14,8 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
   return (
     <div className="min-h-screen bg-white">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <Logo /> JetLemon
+        <Link href="/" className="flex items-center">
+          <Wordmark className="h-8" />
         </Link>
         <nav className="flex gap-4 text-sm text-slate-500">
           <Link href="/privacy" className="hover:text-slate-900">

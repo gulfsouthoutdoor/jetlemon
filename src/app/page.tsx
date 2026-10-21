@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/auth-shell";
+import { Wordmark } from "@/components/auth-shell";
 import { ButtonLink } from "@/components/ui";
 import { PLANS } from "@/lib/stripe";
 
@@ -16,8 +16,8 @@ export default function LandingPage() {
   return (
     <div className="bg-white">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-          <Logo /> JetLemon
+        <Link href="/" className="flex items-center">
+          <Wordmark className="h-9" />
         </Link>
         <nav className="flex items-center gap-3">
           <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900">

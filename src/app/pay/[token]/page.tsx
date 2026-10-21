@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { SubmitButton } from "@/components/submit-button";
+import { Logo } from "@/components/auth-shell";
 import { date, money } from "@/lib/format";
 import { syncInvoicePayment } from "@/lib/payments";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -105,7 +106,9 @@ export default async function PayPage({ params, searchParams }: { params: Promis
           </div>
           {inv.invoice_footer && <p className="mt-6 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">{inv.invoice_footer}</p>}
         </div>
-        <p className="mt-4 text-center text-xs text-slate-400">Sent with JetLemon</p>
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-400">
+          Sent with <Logo className="h-4 w-4" /> JetLemon
+        </p>
       </div>
     </main>
   );

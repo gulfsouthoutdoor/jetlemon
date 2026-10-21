@@ -31,6 +31,9 @@ export type Organization = {
   daily_brief_hour: number;
   daily_brief_sent_on: string | null;
   review_url: string | null;
+  stripe_account_id: string | null;
+  stripe_charges_enabled: boolean;
+  pay_online: boolean;
 };
 
 export type MetaPage = { id: string; org_id: string; page_id: string; page_name: string; connected_at: string };
@@ -99,6 +102,9 @@ export type Invoice = {
   due_on: string;
   paid_on: string | null;
   notes: string | null;
+  pay_token: string;
+  stripe_checkout_session_id: string | null;
+  paid_via: string | null;
   created_at: string;
   customers?: { id: string; name: string; email: string | null; address: string | null } | null;
   invoice_items?: { quantity: number; unit_price: number }[];

@@ -11,7 +11,8 @@ import { PLANS, hasTexting } from "@/lib/stripe";
 import { getSequences } from "@/lib/sequences";
 import { FollowUpsCard } from "@/components/follow-ups-card";
 import type { Member, MetaPage } from "@/lib/types";
-import { cancelInvite, disconnectPage, inviteMember, regenerateLeadAddress, removeMember, updateBusiness, updateTexting } from "./actions";
+import { cancelInvite, connectStripe, disconnectPage, inviteMember, recheckStripe, regenerateLeadAddress, removeMember, updateBusiness, updatePayments, updateTexting } from "./actions";
+import { connectConfigured } from "@/lib/payments";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ error?: string; saved?: string }> }) {
   const { error, saved } = await searchParams;
@@ -33,7 +34,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <PageHeader title="Settings" actions={<ButtonLink variant="secondary" href="/billing">Billing</ButtonLink>} />
       <div className="max-w-2xl space-y-6">
         <ErrorNote message={error} />
-        {saved && <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Saved.</p>}
+        {saved && <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{saved === "1" ? "Saved." : saved}</p>}
 
         <Card title="Business profile">
           <form action={updateBusiness} className="grid gap-4 sm:grid-cols-2">
@@ -207,6 +208,55 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             </fieldset>
           </form>
         </Card>
+
+        <div id="payments">
+          <Card title="Get paid online">
+            <p className="mb-4 text-sm text-slate-600">
+              Every invoice has a private pay link. Connect your Stripe account and customers can pay by card from that link — the money goes straight to you, and the invoice marks itself paid.
+            </p>
+            {org.stripe_charges_enabled ? (
+              <p className="mb-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Stripe is connected. Card payments are on.</p>
+            ) : org.stripe_account_id ? (
+              <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800">Stripe setup was started but isn&apos;t finished yet.</p>
+            ) : null}
+            {isOwner && (
+              <div className="flex flex-wrap items-center gap-3">
+                {connectConfigured() ? (
+                  <>
+                    <form action={connectStripe}>
+                      <SubmitButton pendingLabel="Opening Stripe…" variant={org.stripe_charges_enabled ? "secondary" : "primary"}>
+                        {org.stripe_charges_enabled ? "Open Stripe settings" : org.stripe_account_id ? "Finish Stripe setup" : "Connect Stripe"}
+                      </SubmitButton>
+                    </form>
+                    {org.stripe_account_id && !org.stripe_charges_enabled && (
+                      <form action={recheckStripe}>
+                        <Button variant="ghost">Check again</Button>
+                      </form>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-slate-500">Online payments aren&apos;t switched on for this server yet.</p>
+                )}
+              </div>
+            )}
+            {org.stripe_charges_enabled && (
+              <form action={updatePayments} className="mt-4 border-t border-slate-100 pt-4">
+                <fieldset disabled={!isOwner} className="contents">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="pay_online" defaultChecked={org.pay_online} className="h-4 w-4 rounded border-slate-300" />
+                    <span className="font-medium text-slate-700">Show the Pay by card button on invoices</span>
+                  </label>
+                  {isOwner && (
+                    <div className="mt-3">
+                      <Button variant="secondary">Save</Button>
+                    </div>
+                  )}
+                </fieldset>
+              </form>
+            )}
+            <p className="mt-3 text-xs text-slate-500">Stripe&apos;s card fee (2.9% + 30¢) comes out of each payment{Number(process.env.PLATFORM_FEE_PERCENT ?? 0) > 0 ? `, plus ${process.env.PLATFORM_FEE_PERCENT}% to JetLemon` : ". No extra fee from JetLemon"}. Don&apos;t have a Stripe account? The Connect button creates one for you in a few minutes.</p>
+          </Card>
+        </div>
 
         <FollowUpsCard org={org} sequences={sequences} isOwner={isOwner} texting={hasTexting(org)} />
 

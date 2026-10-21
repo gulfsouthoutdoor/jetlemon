@@ -103,6 +103,21 @@ the click. In Supabase → Authentication → Email Templates, set the link in e
 
 `Site URL` under Authentication → URL Configuration must be `https://jetlemon.com`.
 
+### Pay online (optional)
+
+Stripe Connect with **standard** accounts: the business connects (or creates) its own Stripe account from
+Settings → Get paid online; money, payouts and disputes are theirs. Every non-draft invoice has a private
+link `/pay/<token>` (shown on the invoice page and used by the unpaid-invoice follow-ups as `{pay_link}`).
+"Pay by card" opens Stripe Checkout on the connected account; the pay page and the invoice page ask Stripe
+whether the checkout was paid whenever they load, so no Connect webhook is needed. `PLATFORM_FEE_PERCENT`
+adds an optional application fee. One-time: enable Connect in the Stripe dashboard (Connect → Get started,
+fill in the platform profile) with the same account whose secret key is in `STRIPE_SECRET_KEY`.
+
+### Legal pages
+
+`/privacy`, `/terms` and `/sms-terms` are plain-language pages the Twilio (10DLC) and Meta reviews ask for.
+`LEGAL_ENTITY`, `LEGAL_ADDRESS` and `LEGAL_EMAIL` fill in the operator; the date is in `legal-page.tsx`.
+
 ### Admin page
 
 Set `ADMIN_EMAILS` (comma-separated) in Vercel. Those accounts get an **Admin** link in the sidebar

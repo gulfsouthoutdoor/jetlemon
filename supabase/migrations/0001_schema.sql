@@ -276,6 +276,8 @@ begin
     new.text_block_size := old.text_block_size;
     new.text_block_price_cents := old.text_block_price_cents;
     new.daily_brief_sent_on := old.daily_brief_sent_on;
+    new.stripe_account_id := old.stripe_account_id;        -- (pay online, added 2026-10-21)
+    new.stripe_charges_enabled := old.stripe_charges_enabled;
   end if;
   return new;
 end;
@@ -452,3 +454,31 @@ create unique index sequence_runs_one_per_invoice on public.sequence_runs (invoi
 alter table public.sequence_runs enable row level security;
 create policy "members manage sequence runs" on public.sequence_runs
   for all using (public.is_member(org_id)) with check (public.is_member(org_id));
+
+-- ───────────────────────── Pay online (added 2026-10-21) ─────────────────────────
+-- Each business connects its own Stripe account (Connect, standard). Invoices get a private pay link.
+alter table public.organizations
+  add column if not exists stripe_account_id text,
+  add column if not exists stripe_charges_enabled boolean not null default false,
+  add column if not exists pay_online boolean not null default true;
+alter table public.invoices
+  add column if not exists pay_token text not null default encode(extensions.gen_random_bytes(16), 'hex'),
+  add column if not exists stripe_checkout_session_id text,
+  add column if not exists paid_via text;   -- 'card' when paid through the pay link
+create unique index if not exists invoices_pay_token on public.invoices (pay_token);
+
+-- Public invoice lookup by pay link (no login): one row, only what the customer needs to see.
+create or replace function public.invoice_by_pay_token(token text)
+returns table (id uuid, org_id uuid, number integer, status text, issued_on date, due_on date, paid_on date, notes text,
+  business_name text, business_phone text, business_email text, business_address text, invoice_footer text, pay_online boolean, charges_enabled boolean,
+  customer_name text, customer_email text, items jsonb)
+language sql stable security definer set search_path = public as $$
+  select i.id, i.org_id, i.number, i.status, i.issued_on, i.due_on, i.paid_on, i.notes,
+    o.name, o.phone, o.email, o.address, o.invoice_footer, o.pay_online, o.stripe_charges_enabled,
+    c.name, c.email,
+    coalesce((select jsonb_agg(jsonb_build_object('description', x.description, 'quantity', x.quantity, 'unit_price', x.unit_price) order by x.created_at)
+              from invoice_items x where x.invoice_id = i.id), '[]'::jsonb)
+  from invoices i join organizations o on o.id = i.org_id left join customers c on c.id = i.customer_id
+  where i.pay_token = token and i.status <> 'draft';
+$$;
+grant execute on function public.invoice_by_pay_token(text) to anon, authenticated;

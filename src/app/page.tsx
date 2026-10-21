@@ -8,7 +8,7 @@ const features = [
   { title: "Drag-free scheduling", body: "A weekly calendar of every job. See who's booked, where, and when at a glance." },
   { title: "Job tracking", body: "Move work from lead → scheduled → in progress → completed with one click." },
   { title: "Invoices in seconds", body: "Turn a finished job into an invoice instantly. Print, PDF or email it to your customer." },
-  { title: "Get paid faster", body: "See outstanding and overdue invoices on your dashboard so nothing slips." },
+  { title: "Get paid faster", body: "Every invoice has a pay-by-card link. Automatic reminders chase the unpaid ones so you don't have to." },
   { title: "Built for teams", body: "Invite your crew, assign jobs, and keep everyone on the same page." },
 ];
 
@@ -81,7 +81,20 @@ export default function LandingPage() {
         <p className="mt-4 text-sm text-slate-500">Every trial includes Pro. No credit card required.</p>
       </section>
 
-      <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-500">© {new Date().getFullYear()} JetLemon</footer>
+      <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-500">
+        © {new Date().getFullYear()} JetLemon ·{" "}
+        <Link href="/privacy" className="hover:text-slate-900">
+          Privacy
+        </Link>{" "}
+        ·{" "}
+        <Link href="/terms" className="hover:text-slate-900">
+          Terms
+        </Link>{" "}
+        ·{" "}
+        <Link href="/sms-terms" className="hover:text-slate-900">
+          Texting
+        </Link>
+      </footer>
     </div>
   );
 }

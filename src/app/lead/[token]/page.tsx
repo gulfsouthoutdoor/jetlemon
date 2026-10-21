@@ -44,7 +44,10 @@ export default async function LeadFormPage({ params, searchParams }: { params: P
                 <textarea name="message" rows={3} className={input} />
               </label>
               <button className="w-full rounded-md bg-slate-900 px-4 py-3 text-base font-medium text-white hover:bg-slate-700">Send request</button>
-              <p className="text-xs text-slate-500">By sending, you agree that {org.name} may call or text you about your request. Message and data rates may apply.</p>
+              <p className="text-xs text-slate-500">
+                By sending, you agree that {org.name} may call, text and email you about your request. Message and data rates may apply; reply STOP to stop texts.{" "}
+                <a href="/sms-terms" className="underline">Texting terms</a> · <a href="/privacy" className="underline">Privacy</a>
+              </p>
             </form>
           </>
         )}

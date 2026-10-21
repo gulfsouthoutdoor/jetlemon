@@ -3,6 +3,7 @@ import { emailConfigured, sendEmail, unsubscribeUrl } from "@/lib/email";
 import { dayKey, fromLocalInput, invoiceTotal, money } from "@/lib/format";
 import { sendBusinessText } from "@/lib/texting";
 import { hasFollowUps } from "@/lib/stripe";
+import { payUrl } from "@/lib/payments";
 import type { Customer, Organization } from "@/lib/types";
 
 /**
@@ -71,14 +72,14 @@ export const DEFAULT_STEPS: Record<SequenceKey, Step[]> = {
       day: 3,
       channel: "email",
       subject: "Invoice #{invoice_number} from {business}",
-      body: "Hi {first_name},\n\nA quick reminder that invoice #{invoice_number} for {amount} is open. Reply to this email if you have any questions or need to arrange payment.\n\nThank you,\n{business}",
+      body: "Hi {first_name},\n\nA quick reminder that invoice #{invoice_number} for {amount} is open. You can view it and pay here:\n\n{pay_link}\n\nReply to this email if you have any questions.\n\nThank you,\n{business}",
     },
-    { day: 7, channel: "text", subject: "", body: "Hi {first_name}, {business} here. Invoice #{invoice_number} ({amount}) is still open — reply here if you have questions or need to arrange payment. Thanks!" },
+    { day: 7, channel: "text", subject: "", body: "Hi {first_name}, {business} here. Invoice #{invoice_number} ({amount}) is still open. Pay or view it here: {pay_link} — reply with any questions. Thanks!" },
     {
       day: 14,
       channel: "email",
       subject: "Invoice #{invoice_number} is past due",
-      body: "Hi {first_name},\n\nInvoice #{invoice_number} for {amount} is now past due. Please reply to this email or call {phone} so we can get it settled.\n\nThank you,\n{business}",
+      body: "Hi {first_name},\n\nInvoice #{invoice_number} for {amount} is now past due. You can settle it here:\n\n{pay_link}\n\nOr reply to this email or call {phone} and we'll sort it out.\n\nThank you,\n{business}",
     },
   ],
 };
@@ -86,7 +87,7 @@ export const DEFAULT_STEPS: Record<SequenceKey, Step[]> = {
 export const MERGE_FIELDS: Record<SequenceKey, string[]> = {
   new_lead: ["{first_name}", "{name}", "{business}", "{phone}"],
   after_job: ["{first_name}", "{name}", "{business}", "{phone}", "{review_link}"],
-  unpaid_invoice: ["{first_name}", "{name}", "{business}", "{phone}", "{invoice_number}", "{amount}"],
+  unpaid_invoice: ["{first_name}", "{name}", "{business}", "{phone}", "{invoice_number}", "{amount}", "{pay_link}"],
 };
 
 type Vars = Record<string, string>;
@@ -258,13 +259,14 @@ async function processRun(db: SupabaseClient, run: RunRow): Promise<"sent" | "sk
     }
   }
   if (run.invoice_id) {
-    const { data: inv } = await db.from("invoices").select("number, status, invoice_items(quantity, unit_price)").eq("id", run.invoice_id).maybeSingle();
+    const { data: inv } = await db.from("invoices").select("number, status, pay_token, invoice_items(quantity, unit_price)").eq("id", run.invoice_id).maybeSingle();
     if (!inv || inv.status !== "sent") {
       await finish("stopped", inv ? `invoice ${inv.status}` : "invoice removed");
       return "stopped";
     }
     vars.invoice_number = String(inv.number);
     vars.amount = money(invoiceTotal(inv));
+    vars.pay_link = payUrl(inv.pay_token);
   }
 
   // Send this step.

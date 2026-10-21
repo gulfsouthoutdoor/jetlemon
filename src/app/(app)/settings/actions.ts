@@ -6,6 +6,8 @@ import { getContext } from "@/lib/org";
 import { str } from "@/lib/format";
 import { normalizePhone } from "@/lib/sms";
 import { DEFAULT_STEPS, MAX_STEPS, SEQUENCE_KEYS, type SequenceKey } from "@/lib/sequences";
+import { refreshConnect, startConnect } from "@/lib/payments";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function updateBusiness(fd: FormData) {
   const { supabase, org } = await getContext();
@@ -122,4 +124,34 @@ export async function resetSequence(key: SequenceKey) {
     .upsert({ org_id: org.id, key, enabled: data?.enabled ?? false, steps: DEFAULT_STEPS[key], updated_at: new Date().toISOString() }, { onConflict: "org_id,key" });
   revalidatePath("/settings");
   redirect("/settings?saved=1#followups");
+}
+
+/** Owner pressed Connect Stripe: start (or resume) Stripe's onboarding and send them there. */
+export async function connectStripe() {
+  const { org, user, role } = await getContext();
+  if (role !== "owner") return;
+  let url: string;
+  try {
+    url = await startConnect(createAdminClient(), org, user.email ?? null);
+  } catch (err) {
+    redirect(`/settings?error=${encodeURIComponent(`Stripe: ${(err as Error).message}`)}#payments`);
+  }
+  redirect(url);
+}
+
+/** Checks with Stripe whether the connected account is ready (handy if the return trip was missed). */
+export async function recheckStripe() {
+  const { org, role } = await getContext();
+  if (role !== "owner") return;
+  const enabled = await refreshConnect(createAdminClient(), org);
+  revalidatePath("/settings");
+  redirect(`/settings?${enabled ? "saved" : "error"}=${encodeURIComponent(enabled ? "Stripe is connected and ready." : "Stripe still needs more information — press Connect Stripe to finish.")}#payments`);
+}
+
+export async function updatePayments(fd: FormData) {
+  const { supabase, org, role } = await getContext();
+  if (role !== "owner") return;
+  await supabase.from("organizations").update({ pay_online: fd.get("pay_online") === "on" }).eq("id", org.id);
+  revalidatePath("/settings");
+  redirect("/settings?saved=1#payments");
 }

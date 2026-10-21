@@ -6,6 +6,9 @@ import { getContext } from "@/lib/org";
 import { date, isOverdue, money } from "@/lib/format";
 import type { Invoice, InvoiceItem } from "@/lib/types";
 import { addItem, deleteInvoice, removeItem, setInvoiceStatus, updateInvoice } from "../actions";
+import { CopyField } from "@/components/copy-field";
+import { payUrl, syncInvoicePayment } from "@/lib/payments";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,6 +20,17 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   ]);
   if (!data) notFound();
   const inv = data as Invoice;
+  // A card payment may have landed since the page was last opened.
+  if (inv.status === "sent" && inv.stripe_checkout_session_id) {
+    const status = await syncInvoicePayment(createAdminClient(), inv, org.stripe_account_id);
+    if (status === "paid") {
+      inv.status = "paid";
+      inv.paid_on = new Date().toISOString().slice(0, 10);
+      inv.paid_via = "card";
+    }
+  }
+  const payLink = payUrl(inv.pay_token);
+  const cardPay = org.stripe_charges_enabled && org.pay_online;
   const items = (itemRows ?? []) as InvoiceItem[];
   const total = items.reduce((s, it) => s + Number(it.quantity) * Number(it.unit_price), 0);
   const editable = inv.status === "draft" || inv.status === "sent";
@@ -24,7 +38,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const mailto =
     inv.customers?.email &&
     `mailto:${inv.customers.email}?subject=${encodeURIComponent(`Invoice #${inv.number} from ${org.name}`)}&body=${encodeURIComponent(
-      `Hi ${inv.customers.name},\n\nPlease find your invoice #${inv.number} for ${money(total)}, due ${date(inv.due_on)}.\n\nThank you for your business!\n${org.name}`,
+      `Hi ${inv.customers.name},\n\nPlease find your invoice #${inv.number} for ${money(total)}, due ${date(inv.due_on)}.\n\n${cardPay ? "Pay by card here: " : "View it here: "}${payLink}\n\nThank you for your business!\n${org.name}`,
     )}`;
 
   return (
@@ -53,6 +67,20 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
+      {inv.status !== "draft" && (
+        <div className="mb-6 rounded-md border border-slate-200 bg-white p-4 print:hidden">
+          <p className="mb-2 text-sm font-medium text-slate-700">
+            {cardPay ? "Pay link — customers can pay by card here" : "Customer link — they can view the invoice here"}
+          </p>
+          <CopyField value={payLink} />
+          {!cardPay && (
+            <p className="mt-2 text-xs text-slate-500">
+              Connect Stripe under <Link href="/settings#payments" className="text-indigo-600 hover:underline">Settings → Get paid online</Link> and this link takes card payments.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Printable invoice */}
       <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm print:border-0 print:shadow-none">
         <div className="flex flex-wrap justify-between gap-6">
@@ -67,7 +95,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             </div>
             <p className="mt-2 text-sm text-slate-500">Issued {date(inv.issued_on)}</p>
             <p className="text-sm text-slate-500">Due {date(inv.due_on)}</p>
-            {inv.paid_on && <p className="text-sm font-medium text-emerald-600">Paid {date(inv.paid_on)}</p>}
+            {inv.paid_on && (
+              <p className="text-sm font-medium text-emerald-600">
+                Paid {date(inv.paid_on)}
+                {inv.paid_via === "card" ? " by card" : ""}
+              </p>
+            )}
           </div>
         </div>
 

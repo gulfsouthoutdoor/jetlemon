@@ -14,6 +14,18 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
           <Link href="/login" className="font-medium text-indigo-600 hover:underline">
             Sign in
           </Link>
+          <br />
+          <span className="text-xs">
+            By signing up you agree to the{" "}
+            <Link href="/terms" className="underline hover:text-slate-700">
+              terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline hover:text-slate-700">
+              privacy policy
+            </Link>
+            .
+          </span>
         </>
       }
     >

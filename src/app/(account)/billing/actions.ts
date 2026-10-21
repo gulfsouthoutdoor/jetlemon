@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getContext } from "@/lib/org";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { PLANS, type PlanKey, stripe } from "@/lib/stripe";
+import { PLANS, type PlanKey, isComplimentary, stripe } from "@/lib/stripe";
 
 async function origin() {
   return (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -16,6 +16,7 @@ const asPlan = (v: unknown): PlanKey => (v === "pro" ? "pro" : "starter");
 export async function choosePlan(fd: FormData) {
   const { org, user, role } = await getContext();
   if (role !== "owner") redirect("/billing?error=Only+the+account+owner+can+manage+billing");
+  if (isComplimentary(org)) redirect("/billing?error=This+account+is+complimentary+%E2%80%94+nothing+to+pay.");
   const plan = asPlan(fd.get("plan"));
   const price = PLANS[plan];
   if (!price.priceId) redirect(`/billing?error=${encodeURIComponent(`${price.name} is not set up on this server yet.`)}`);

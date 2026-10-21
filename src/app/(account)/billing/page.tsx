@@ -2,7 +2,7 @@ import { Button, ErrorNote, PageHeader } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { getContext, hasActiveAccess } from "@/lib/org";
 import { date } from "@/lib/format";
-import { PLANS, effectivePlan } from "@/lib/stripe";
+import { PLANS, effectivePlan, isComplimentary } from "@/lib/stripe";
 import { choosePlan, openPortal } from "./actions";
 
 export default async function BillingPage({ searchParams }: { searchParams: Promise<{ success?: string; error?: string }> }) {
@@ -12,6 +12,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const paying = Boolean(org.stripe_subscription_id) && org.subscription_status !== "canceled";
   const current = effectivePlan(org);
   const trialing = org.subscription_status === "trialing";
+  const comped = isComplimentary(org);
 
   return (
     <>
@@ -22,6 +23,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             Status: <span className="font-medium text-slate-900">{org.subscription_status.replace("_", " ")}</span>
             {trialing && ` · Pro trial ends ${date(org.trial_ends_at)}`}
             {paying && ` · ${PLANS[current].name} plan`}
+            {comped && ` · ${PLANS[current].name} plan, complimentary`}
           </>
         }
       />
@@ -33,6 +35,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             Your {org.subscription_status === "trialing" ? "free trial has ended" : "subscription is inactive"}. Pick a plan to keep using JetLemon — your data is safe.
           </p>
         )}
+        {comped && (
+          <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            This account is complimentary — {PLANS[current].name} plan, nothing to pay. The plans below are what subscribers see.
+          </p>
+        )}
         {trialing && (
           <p className="rounded-md bg-indigo-50 px-3 py-2 text-sm text-indigo-900">
             Your trial includes everything in Pro. Pick the plan you want when the trial ends — or now, if you&apos;d like to lock it in.
@@ -42,7 +49,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         <div className="grid gap-4 sm:grid-cols-2">
           {(["starter", "pro"] as const).map((key) => {
             const p = PLANS[key];
-            const isCurrent = paying && current === key;
+            const isCurrent = (paying || comped) && current === key;
             const highlight = key === "pro";
             return (
               <section key={key} className={`rounded-xl border bg-white p-6 shadow-sm ${highlight ? "border-indigo-300 ring-1 ring-indigo-200" : "border-slate-200"}`}>
@@ -60,7 +67,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                     <li key={f}>✓ {f}</li>
                   ))}
                 </ul>
-                {role === "owner" && (
+                {role === "owner" && !comped && (
                   <form action={choosePlan} className="mt-5">
                     <input type="hidden" name="plan" value={key} />
                     {isCurrent ? (

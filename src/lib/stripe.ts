@@ -52,6 +52,10 @@ export function effectivePlan(org: Pick<Organization, "plan" | "subscription_sta
   return org.plan === "pro" ? "pro" : "starter";
 }
 
+/** Active with no Stripe subscription behind it = an account JetLemon gave away (the owner's own, a partner, a friend). */
+export const isComplimentary = (org: Pick<Organization, "subscription_status" | "stripe_subscription_id">) =>
+  org.subscription_status === "active" && !org.stripe_subscription_id;
+
 export const hasTexting = (org: Pick<Organization, "plan" | "subscription_status">) => effectivePlan(org) === "pro";
 
 /** Kept for older imports. */

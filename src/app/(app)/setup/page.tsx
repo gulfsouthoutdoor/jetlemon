@@ -82,7 +82,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
 
           <Card title="What customers will see">
             <div className="space-y-4">
-              <Field label="First text a new lead gets">
+              <Field label="First text a new lead gets (an email goes with it — edit both later under Settings → Follow-ups)">
                 <Textarea name="auto_text_template" defaultValue={draft.auto_text_template} rows={2} />
               </Field>
               <p className="-mt-2 text-xs text-slate-500">{"{first_name}"} and {"{business}"} fill in automatically.</p>

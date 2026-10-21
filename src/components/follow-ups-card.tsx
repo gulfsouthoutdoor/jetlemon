@@ -10,14 +10,14 @@ export function FollowUpsCard({ org, sequences, isOwner, texting }: { org: Organ
     <div id="followups">
       <Card title="Follow-ups">
         <p className="mb-4 text-sm text-slate-600">
-          Automatic texts and emails that go out on their own and stop on their own. Day 0 goes right away; later days go at {SEND_HOUR} AM your time.
+          Automatic texts and emails that go out on their own and stop on their own. Day 0 goes the moment the lead arrives; later days go at {SEND_HOUR} AM your time. Save with an empty row to add another step (up to {MAX_STEPS}).
           {!texting && " Text steps need the Pro plan — email steps work on every plan."}
           {!emailConfigured() && " Email isn't switched on for this server yet, so email steps will be skipped."}
         </p>
         <div className="space-y-6">
           {sequences.map((seq) => {
             const info = SEQUENCE_INFO[seq.key];
-            const rows = [...seq.steps, ...Array(Math.max(0, MAX_STEPS - seq.steps.length)).fill(null)].slice(0, MAX_STEPS);
+            const rows = [...seq.steps, ...(seq.steps.length < MAX_STEPS ? [null] : [])];
             return (
               <form key={seq.key} action={saveSequence.bind(null, seq.key)} className="rounded-lg border border-slate-200 p-4">
                 <fieldset disabled={!isOwner} className="contents">

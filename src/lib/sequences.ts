@@ -14,25 +14,47 @@ export type SequenceKey = (typeof SEQUENCE_KEYS)[number];
 export type Channel = "text" | "email";
 export type Step = { day: number; channel: Channel; subject: string; body: string };
 export type Sequence = { key: SequenceKey; enabled: boolean; steps: Step[]; custom: boolean };
-export const MAX_STEPS = 4;
+export const MAX_STEPS = 8;
+/** Sequences that run without the owner touching anything. */
+export const DEFAULT_ENABLED: Record<SequenceKey, boolean> = { new_lead: true, after_job: false, unpaid_invoice: false };
 export const SEND_HOUR = 9;
 
 export const SEQUENCE_INFO: Record<SequenceKey, { name: string; trigger: string; stops: string }> = {
-  new_lead: { name: "New lead", trigger: "a new lead comes in", stops: "they reply, or the job is scheduled or cancelled" },
+  new_lead: { name: "New lead", trigger: "a new lead comes in (text + email right away, then days 1, 3 and 7)", stops: "they reply, or the job is scheduled or cancelled" },
   after_job: { name: "After the job", trigger: "a job is marked completed", stops: "they reply" },
   unpaid_invoice: { name: "Unpaid invoice", trigger: "an invoice is sent", stops: "it's paid or voided, or they reply" },
 };
 
 export const DEFAULT_STEPS: Record<SequenceKey, Step[]> = {
   new_lead: [
+    { day: 0, channel: "text", subject: "", body: "Hi {first_name}, this is {business}. We got your request and will be in touch shortly. When is a good time to call you?" },
+    {
+      day: 0,
+      channel: "email",
+      subject: "We got your request, {first_name}",
+      body: "Hi {first_name},\n\nThanks for reaching out to {business}. We've got your request and will be in touch shortly to go over what you need and set up a time.\n\nIf it's easier, reply to this email or call {phone}.\n\nTalk soon,\n{business}",
+    },
     { day: 1, channel: "text", subject: "", body: "Hi {first_name}, it's {business}. Still want a hand with your project? Reply here and we'll get you on the schedule." },
+    {
+      day: 1,
+      channel: "email",
+      subject: "Ready when you are, {first_name}",
+      body: "Hi {first_name},\n\nJust following up on your request to {business}. We'd be glad to help — reply to this email or call {phone} and we'll find a time that works for you.\n\nThanks,\n{business}",
+    },
+    { day: 3, channel: "text", subject: "", body: "Hi {first_name}, {business} here. Want us to get you on the schedule this week? Reply with a day that works." },
     {
       day: 3,
       channel: "email",
       subject: "Still need a hand, {first_name}?",
-      body: "Hi {first_name},\n\nThanks again for reaching out to {business}. We'd be glad to help — just reply to this email or call {phone} and we'll find a time that works for you.\n\nTalk soon,\n{business}",
+      body: "Hi {first_name},\n\nChecking in one more time from {business}. If you still need help with your project, we'd love to take care of it. Reply here or call {phone}.\n\nThanks,\n{business}",
     },
     { day: 7, channel: "text", subject: "", body: "Hi {first_name}, last check-in from {business}. If the timing isn't right, no problem — reply anytime and we'll be ready." },
+    {
+      day: 7,
+      channel: "email",
+      subject: "We're here when you're ready",
+      body: "Hi {first_name},\n\nThis is our last check-in from {business}. If now isn't the right time, no problem at all — this email will be here whenever you're ready, and so will we.\n\nAll the best,\n{business}",
+    },
   ],
   after_job: [
     { day: 0, channel: "text", subject: "", body: "Thanks for choosing {business}, {first_name}! If anything isn't right, reply here and we'll take care of it." },
@@ -87,7 +109,7 @@ export async function getSequences(db: SupabaseClient, orgId: string): Promise<S
   const { data } = await db.from("sequences").select("key, enabled, steps").eq("org_id", orgId);
   return SEQUENCE_KEYS.map((key) => {
     const row = data?.find((r) => r.key === key);
-    return row ? { key, enabled: row.enabled, steps: cleanSteps(row.steps), custom: true } : { key, enabled: false, steps: DEFAULT_STEPS[key], custom: false };
+    return row ? { key, enabled: row.enabled, steps: cleanSteps(row.steps), custom: true } : { key, enabled: DEFAULT_ENABLED[key], steps: DEFAULT_STEPS[key], custom: false };
   });
 }
 
@@ -96,6 +118,12 @@ function stepTime(step: Step, startedAt: Date, timezone: string) {
   if (step.day === 0) return startedAt.toISOString();
   const day = dayKey(new Date(startedAt.getTime() + step.day * 86_400_000), timezone);
   return fromLocalInput(`${day}T${String(SEND_HOUR).padStart(2, "0")}:00`, timezone) ?? startedAt.toISOString();
+}
+
+/** One sequence's switch and steps, using the built-in defaults when the business hasn't saved its own. */
+async function loadSequence(db: SupabaseClient, orgId: string, key: SequenceKey) {
+  const { data } = await db.from("sequences").select("enabled, steps").eq("org_id", orgId).eq("key", key).maybeSingle();
+  return data ? { enabled: data.enabled as boolean, steps: cleanSteps(data.steps) } : { enabled: DEFAULT_ENABLED[key], steps: DEFAULT_STEPS[key] };
 }
 
 export type EnrollTarget = { customerId: string | null | undefined; jobId?: string | null; invoiceId?: string | null };
@@ -107,10 +135,9 @@ export type EnrollTarget = { customerId: string | null | undefined; jobId?: stri
  */
 export async function enroll(db: SupabaseClient, org: Organization, key: SequenceKey, target: EnrollTarget) {
   if (!target.customerId) return;
-  const { data: seq } = await db.from("sequences").select("enabled, steps").eq("org_id", org.id).eq("key", key).maybeSingle();
-  if (!seq?.enabled) return;
-  const steps = cleanSteps(seq.steps);
-  if (!steps.length) return;
+  const seq = await loadSequence(db, org.id, key);
+  if (!seq.enabled || !seq.steps.length) return;
+  const steps = seq.steps;
 
   const now = new Date();
   const { data: run, error } = await db
@@ -176,20 +203,20 @@ async function processRun(db: SupabaseClient, run: RunRow): Promise<"sent" | "sk
   const finish = (status: "stopped" | "done", reason?: string) =>
     db.from("sequence_runs").update({ status, stop_reason: reason ?? null, next_at: null, updated_at: new Date().toISOString() }).eq("id", run.id);
 
-  const [{ data: org }, { data: seq }, { data: customer }] = await Promise.all([
+  const [{ data: org }, seq, { data: customer }] = await Promise.all([
     db.from("organizations").select("*").eq("id", run.org_id).single(),
-    db.from("sequences").select("enabled, steps").eq("org_id", run.org_id).eq("key", run.sequence_key).maybeSingle(),
+    loadSequence(db, run.org_id, run.sequence_key),
     db.from("customers").select("*").eq("id", run.customer_id).single(),
   ]);
   if (!org || !customer) {
     await finish("stopped", "customer or business no longer exists");
     return "stopped";
   }
-  if (!seq?.enabled) {
+  if (!seq.enabled) {
     await finish("stopped", "follow-up switched off");
     return "stopped";
   }
-  const steps = cleanSteps(seq.steps);
+  const steps = seq.steps;
   const step = steps[run.step];
   if (!step) {
     await finish("done");

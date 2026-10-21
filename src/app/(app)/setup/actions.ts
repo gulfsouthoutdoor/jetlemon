@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { aiConfigured, askJson } from "@/lib/ai";
 import { str } from "@/lib/format";
 import { getContext } from "@/lib/org";
+import { DEFAULT_STEPS } from "@/lib/sequences";
 
 export type Draft = {
   services: string;
@@ -98,6 +99,16 @@ export async function saveProfile(fd: FormData) {
     })
     .eq("id", org.id);
   if (error) redirect(`/setup?error=${encodeURIComponent(error.message)}`);
+
+  // The instant text becomes day 0 of the "New lead" follow-up (unless the owner already customized it).
+  const firstText = str(fd, "auto_text_template");
+  if (firstText) {
+    const { data: existing } = await supabase.from("sequences").select("id").eq("org_id", org.id).eq("key", "new_lead").maybeSingle();
+    if (!existing) {
+      const steps = DEFAULT_STEPS.new_lead.map((st, i) => (i === 0 ? { ...st, body: firstText } : st));
+      await supabase.from("sequences").insert({ org_id: org.id, key: "new_lead", enabled: true, steps });
+    }
+  }
   revalidatePath("/", "layout");
   redirect(fd.get("next") === "import" ? "/import" : "/dashboard?welcome=1");
 }

@@ -55,8 +55,6 @@ export async function updateTexting(fd: FormData) {
     .from("organizations")
     .update({
       notify_phone: notifyPhone,
-      auto_text_enabled: fd.get("auto_text_enabled") === "on",
-      auto_text_template: str(fd, "auto_text_template") ?? org.auto_text_template,
       text_block_limit: Math.max(0, Math.min(50, Number(str(fd, "text_block_limit") ?? org.text_block_limit) || 0)),
       texting_paused: fd.get("texting_paused") === "on",
       daily_brief_enabled: fd.get("daily_brief_enabled") === "on",

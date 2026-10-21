@@ -184,14 +184,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               <Field label="Text me when a new lead comes in (your cell)">
                 <Input name="notify_phone" defaultValue={org.notify_phone ?? ""} placeholder="205-555-0142" />
               </Field>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="auto_text_enabled" defaultChecked={org.auto_text_enabled} className="h-4 w-4 rounded border-slate-300" />
-                <span className="font-medium text-slate-700">Auto-text new leads right away</span>
-              </label>
-              <Field label="Auto-text message">
-                <Textarea name="auto_text_template" defaultValue={org.auto_text_template} />
-              </Field>
-              <p className="text-xs text-slate-500">You can use {"{first_name}"}, {"{name}"} and {"{business}"}. Needs a texting number and the lead&apos;s phone.</p>
+              <p className="text-xs text-slate-500">
+                The instant text to every new lead lives under <a href="#followups" className="text-indigo-600 hover:underline">Follow-ups</a> below, with the emails and repeats.
+              </p>
               <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
                 <label className="flex items-center gap-2">
                   <input type="checkbox" name="daily_brief_enabled" defaultChecked={org.daily_brief_enabled} className="h-4 w-4 rounded border-slate-300" />

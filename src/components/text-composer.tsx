@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button, inputClass } from "./ui";
+import { SubmitButton } from "./submit-button";
 
 type Props = {
   sendAction: (fd: FormData) => Promise<void>;
@@ -48,7 +49,7 @@ export function TextComposer({ sendAction, suggestAction, disabled, placeholder,
           className={inputClass}
         />
         <div className="flex flex-col gap-1.5">
-          <Button disabled={disabled}>Send</Button>
+          <SubmitButton disabled={disabled} pendingLabel="Sending…">Send</SubmitButton>
           {aiOn && (
             <Button
               type="button"

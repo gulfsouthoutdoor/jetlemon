@@ -1,6 +1,7 @@
 import { CopyField } from "@/components/copy-field";
 import { TimezoneSelect } from "@/components/timezone-select";
 import { Button, ButtonLink, Card, ErrorNote, Field, Input, PageHeader, Textarea } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { dateTime } from "@/lib/format";
 import { metaConfigured } from "@/lib/meta";
 import { getContext } from "@/lib/org";
@@ -68,7 +69,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               </Field>
               {isOwner && (
                 <div>
-                  <Button>Save</Button>
+                  <SubmitButton pendingLabel="Saving…">Save</SubmitButton>
                 </div>
               )}
             </fieldset>

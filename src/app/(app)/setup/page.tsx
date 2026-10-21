@@ -1,4 +1,5 @@
 import { Button, Card, ErrorNote, Field, Input, PageHeader, Textarea } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { aiConfigured } from "@/lib/ai";
 import { getContext } from "@/lib/org";
 import { draftProfile, saveProfile, skipSetup, type Draft } from "./actions";
@@ -37,7 +38,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 <Input name="website" placeholder="brightpathclean.com" />
               </Field>
               <div className="flex items-center gap-3">
-                <Button>{aiConfigured() ? "Set it up for me" : "Continue"}</Button>
+                <SubmitButton pendingLabel="Writing your setup…">{aiConfigured() ? "Set it up for me" : "Continue"}</SubmitButton>
                 <button formAction={skipSetup} className="text-sm text-slate-500 hover:text-slate-900">
                   Skip for now
                 </button>
@@ -100,12 +101,12 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           </Card>
 
           <div className="flex flex-wrap gap-2">
-            <Button name="next" value="dashboard">
+            <SubmitButton name="next" value="dashboard" pendingLabel="Saving…">
               Save and go to dashboard
-            </Button>
-            <Button name="next" value="import" variant="secondary">
+            </SubmitButton>
+            <SubmitButton name="next" value="import" variant="secondary" pendingLabel="Saving…">
               Save, then import my customers
-            </Button>
+            </SubmitButton>
           </div>
         </form>
       </div>

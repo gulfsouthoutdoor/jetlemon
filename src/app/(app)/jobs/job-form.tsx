@@ -1,4 +1,5 @@
 import { Button, Field, Input, Select, Textarea } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { statusLabel, toLocalInput } from "@/lib/format";
 import { JOB_STATUSES, type Job, type Member } from "@/lib/types";
 
@@ -71,7 +72,7 @@ export function JobForm({
         <Textarea name="description" defaultValue={job?.description ?? ""} />
       </Field>
       <div className="sm:col-span-2">
-        <Button>{submitLabel}</Button>
+        <SubmitButton pendingLabel="Saving…">{submitLabel}</SubmitButton>
       </div>
     </form>
   );

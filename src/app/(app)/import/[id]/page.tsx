@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Button, ButtonLink, Card, PageHeader, Select } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { CUSTOMER_FIELDS, JOB_FIELDS, type ImportSummary, type Mapping, type Sheet } from "@/lib/import";
 import { getContext } from "@/lib/org";
 import { confirmImport, discardImport } from "../actions";
@@ -121,7 +122,7 @@ export default async function ReviewImportPage({ params }: { params: Promise<{ i
           People already in JetLemon (same phone, email, or exact name) are updated, not duplicated. Columns set to Notes are kept on the customer as &quot;Column: value&quot;.
         </p>
         <div className="flex gap-2">
-          <Button>Import now</Button>
+          <SubmitButton pendingLabel="Importing…">Import now</SubmitButton>
           <Button formAction={discardImport.bind(null, id)} variant="secondary" type="submit">
             Cancel
           </Button>

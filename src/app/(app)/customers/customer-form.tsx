@@ -1,4 +1,5 @@
 import { Button, Field, Input, Textarea } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import type { Customer } from "@/lib/types";
 
 export function CustomerForm({
@@ -31,7 +32,7 @@ export function CustomerForm({
         <Textarea name="notes" defaultValue={customer?.notes ?? ""} placeholder="Gate code, pets, preferences…" />
       </Field>
       <div className="sm:col-span-2">
-        <Button>{submitLabel}</Button>
+        <SubmitButton pendingLabel="Saving…">{submitLabel}</SubmitButton>
       </div>
     </form>
   );

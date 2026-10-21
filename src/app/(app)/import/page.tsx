@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Button, Card, ErrorNote, PageHeader } from "@/components/ui";
+import { Card, ErrorNote, PageHeader } from "@/components/ui";
+import { SubmitButton } from "@/components/submit-button";
 import { aiConfigured } from "@/lib/ai";
 import { dateTime } from "@/lib/format";
 import { getContext } from "@/lib/org";
@@ -29,7 +30,7 @@ export default async function ImportPage({ searchParams }: { searchParams: Promi
               CSV or Excel. Works with exports from GoHighLevel, Jobber, Housecall Pro, QuickBooks, Google Contacts, or any sheet you made yourself — column names don&apos;t
               have to match anything. Up to 5,000 rows per sheet and 4 MB per file.
             </p>
-            <Button>Upload and review</Button>
+            <SubmitButton pendingLabel="Reading your file…">Upload and review</SubmitButton>
             {!aiConfigured() && <p className="text-xs text-slate-500">AI matching is off on this server; columns will be guessed from their names.</p>}
           </form>
         </Card>

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fillTemplate, normalizePhone } from "@/lib/sms";
 import { sendBusinessText } from "@/lib/texting";
+import { enroll } from "@/lib/sequences";
 import { aiConfigured, askJson, businessContext } from "@/lib/ai";
 
 export type InboundLead = {
@@ -111,6 +112,9 @@ export async function createInboundLead(admin: SupabaseClient, orgId: string, le
     const body = fillTemplate(org.auto_text_template, { name, business: org.name });
     await sendBusinessText(admin, org, { to: phone, body, customerId, kind: "auto_text" });
   }
+
+  // Start the "new lead" follow-up sequence if the business has it switched on.
+  await enroll(admin, org, "new_lead", { customerId, jobId: job.id });
 
   // Alert the owner.
   if (org.sms_number && org.notify_phone) {

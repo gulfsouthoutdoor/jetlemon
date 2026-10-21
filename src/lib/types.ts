@@ -30,6 +30,7 @@ export type Organization = {
   daily_brief_enabled: boolean;
   daily_brief_hour: number;
   daily_brief_sent_on: string | null;
+  review_url: string | null;
 };
 
 export type MetaPage = { id: string; org_id: string; page_id: string; page_name: string; connected_at: string };
@@ -39,6 +40,7 @@ export type Message = {
   org_id: string;
   customer_id: string | null;
   direction: "in" | "out";
+  channel: "sms" | "email";
   body: string;
   from_number: string;
   to_number: string;
@@ -56,6 +58,8 @@ export type Customer = {
   address: string | null;
   tags: string[];
   notes: string | null;
+  text_opt_out: boolean;
+  email_opt_out: boolean;
   created_at: string;
 };
 

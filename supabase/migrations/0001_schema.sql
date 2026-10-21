@@ -401,10 +401,54 @@ language sql stable security definer set search_path = public as $$
     (select count(*) from customers c where c.org_id = o.id)::int,
     (select count(*) from jobs j where j.org_id = o.id)::int,
     (select count(*) from messages x where x.org_id = o.id and x.direction = 'out' and x.status = 'sent'
-      and x.created_at >= date_trunc('month', now()))::int,
+      and x.channel = 'sms' and x.created_at >= date_trunc('month', now()))::int,
     (select max(u.last_sign_in_at) from memberships m join auth.users u on u.id = m.user_id where m.org_id = o.id)
   from organizations o
   where coalesce(current_setting('request.jwt.claim.role', true),
                  current_setting('request.jwt.claims', true)::jsonb ->> 'role') = 'service_role'
   order by o.created_at desc;
 $$;
+
+-- ───────────────────────── Follow-ups (added 2026-10-21) ─────────────────────────
+-- Pre-made text + email sequences: new lead, after the job, unpaid invoice. Steps live as JSON
+-- [{day, channel: 'text'|'email', subject, body}]; a run tracks one customer through one sequence.
+alter table public.organizations add column if not exists review_url text;
+alter table public.customers
+  add column if not exists text_opt_out boolean not null default false,
+  add column if not exists email_opt_out boolean not null default false;
+alter table public.messages add column if not exists channel text not null default 'sms';  -- sms | email
+
+create table public.sequences (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.organizations(id) on delete cascade,
+  key text not null check (key in ('new_lead', 'after_job', 'unpaid_invoice')),
+  enabled boolean not null default false,
+  steps jsonb not null default '[]',
+  updated_at timestamptz not null default now(),
+  unique (org_id, key)
+);
+alter table public.sequences enable row level security;
+create policy "members manage sequences" on public.sequences
+  for all using (public.is_member(org_id)) with check (public.is_member(org_id));
+
+create table public.sequence_runs (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.organizations(id) on delete cascade,
+  sequence_key text not null,
+  customer_id uuid not null references public.customers(id) on delete cascade,
+  job_id uuid references public.jobs(id) on delete cascade,
+  invoice_id uuid references public.invoices(id) on delete cascade,
+  step integer not null default 0,
+  next_at timestamptz,
+  status text not null default 'active' check (status in ('active', 'done', 'stopped')),
+  stop_reason text,
+  started_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index sequence_runs_due on public.sequence_runs (next_at) where status = 'active';
+create index sequence_runs_customer on public.sequence_runs (customer_id) where status = 'active';
+create unique index sequence_runs_one_per_job on public.sequence_runs (job_id, sequence_key) where job_id is not null;
+create unique index sequence_runs_one_per_invoice on public.sequence_runs (invoice_id, sequence_key) where invoice_id is not null;
+alter table public.sequence_runs enable row level security;
+create policy "members manage sequence runs" on public.sequence_runs
+  for all using (public.is_member(org_id)) with check (public.is_member(org_id));

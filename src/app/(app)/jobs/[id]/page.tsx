@@ -4,17 +4,20 @@ import { Badge, Button, Card, PageHeader } from "@/components/ui";
 import { getContext } from "@/lib/org";
 import { dateTime, money } from "@/lib/format";
 import type { Job, Member } from "@/lib/types";
-import { deleteJob, invoiceJob, setJobStatus, updateJob } from "../actions";
+import { deleteJob, invoiceJob, setJobStatus, stopFollowUp, updateJob } from "../actions";
+import { describeRun, getSequences, type SequenceKey } from "@/lib/sequences";
 import { JobForm } from "../job-form";
 
 export default async function JobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, org } = await getContext();
-  const [{ data }, { data: customers }, { data: members }, { data: invoices }] = await Promise.all([
+  const [{ data }, { data: customers }, { data: members }, { data: invoices }, { data: runs }, sequences] = await Promise.all([
     supabase.from("jobs").select("*, customers(id, name)").eq("id", id).maybeSingle(),
     supabase.from("customers").select("id, name").order("name"),
     supabase.rpc("org_members", { target_org: org.id }),
     supabase.from("invoices").select("id, number, status").eq("job_id", id),
+    supabase.from("sequence_runs").select("id, sequence_key, status, step, next_at, stop_reason").eq("job_id", id).order("started_at"),
+    getSequences(supabase, org.id),
   ]);
   if (!data) notFound();
   const job = data as Job;
@@ -85,6 +88,22 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
               >
                 Open in Maps →
               </a>
+            </Card>
+          )}
+          {runs && runs.length > 0 && (
+            <Card title="Follow-ups">
+              <ul className="space-y-2 text-sm text-slate-700">
+                {runs.map((r) => (
+                  <li key={r.id} className="flex items-start justify-between gap-2">
+                    <span>{describeRun({ ...r, sequence_key: r.sequence_key as SequenceKey }, sequences.find((s) => s.key === r.sequence_key)?.steps ?? [], org.timezone)}</span>
+                    {r.status === "active" && (
+                      <form action={stopFollowUp.bind(null, r.id, job.id)}>
+                        <button className="shrink-0 text-xs text-slate-500 hover:text-red-600">Stop</button>
+                      </form>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </Card>
           )}
           <Card title="Invoices">

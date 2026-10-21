@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { getContext } from "@/lib/org";
 import { str } from "@/lib/format";
 import type { InvoiceStatus } from "@/lib/types";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { enroll, stopRuns } from "@/lib/sequences";
 
 export async function createInvoice(fd: FormData) {
   const { supabase, org } = await getContext();
@@ -33,11 +35,19 @@ export async function updateInvoice(id: string, fd: FormData) {
 }
 
 export async function setInvoiceStatus(id: string, status: InvoiceStatus) {
-  const { supabase } = await getContext();
-  await supabase
+  const { supabase, org } = await getContext();
+  const { data: inv } = await supabase
     .from("invoices")
     .update({ status, paid_on: status === "paid" ? new Date().toISOString().slice(0, 10) : null })
-    .eq("id", id);
+    .eq("id", id)
+    .select("customer_id")
+    .maybeSingle();
+  // Follow-ups: start the unpaid-invoice sequence when it's sent; stop it once paid or voided.
+  if (inv) {
+    const admin = createAdminClient();
+    if (status === "sent") await enroll(admin, org, "unpaid_invoice", { customerId: inv.customer_id, invoiceId: id });
+    else await stopRuns(admin, { invoiceId: id }, `invoice ${status}`);
+  }
   revalidatePath(`/invoices/${id}`);
   revalidatePath("/invoices");
 }

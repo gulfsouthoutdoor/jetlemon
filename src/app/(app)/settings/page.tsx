@@ -8,6 +8,8 @@ import { getContext } from "@/lib/org";
 import { smsConfigured } from "@/lib/sms";
 import { getTextUsage } from "@/lib/texting";
 import { hasTexting } from "@/lib/stripe";
+import { getSequences } from "@/lib/sequences";
+import { FollowUpsCard } from "@/components/follow-ups-card";
 import type { Member, MetaPage } from "@/lib/types";
 import { cancelInvite, disconnectPage, inviteMember, regenerateLeadAddress, removeMember, updateBusiness, updateTexting } from "./actions";
 
@@ -15,11 +17,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const { error, saved } = await searchParams;
   const { supabase, org, user, role } = await getContext();
   const isOwner = role === "owner";
-  const [{ data: members }, { data: invites }, { data: pages }, usage] = await Promise.all([
+  const [{ data: members }, { data: invites }, { data: pages }, usage, sequences] = await Promise.all([
     supabase.rpc("org_members", { target_org: org.id }),
     supabase.from("invitations").select("*").eq("org_id", org.id).is("accepted_at", null).order("created_at"),
     supabase.from("meta_pages").select("id, org_id, page_id, page_name, connected_at").eq("org_id", org.id).order("connected_at"),
     getTextUsage(supabase, org),
+    getSequences(supabase, org.id),
   ]);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const leadAddress = `${siteUrl}/api/leads/${org.inbound_token}`;
@@ -209,6 +212,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             </fieldset>
           </form>
         </Card>
+
+        <FollowUpsCard org={org} sequences={sequences} isOwner={isOwner} texting={hasTexting(org)} />
 
         <Card title="Team">
           <ul className="divide-y divide-slate-100 text-sm">

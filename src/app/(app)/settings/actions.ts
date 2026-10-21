@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getContext } from "@/lib/org";
 import { str } from "@/lib/format";
 import { normalizePhone } from "@/lib/sms";
+import { DEFAULT_STEPS, MAX_STEPS, SEQUENCE_KEYS, type SequenceKey } from "@/lib/sequences";
 
 export async function updateBusiness(fd: FormData) {
   const { supabase, org } = await getContext();
@@ -85,4 +86,42 @@ export async function removeMember(userId: string) {
   const { supabase, org } = await getContext();
   await supabase.from("memberships").delete().eq("org_id", org.id).eq("user_id", userId);
   revalidatePath("/settings");
+}
+
+/** Saves one follow-up sequence: the on/off switch, the review link, and up to four steps. */
+export async function saveSequence(key: SequenceKey, fd: FormData) {
+  const { supabase, org, role } = await getContext();
+  if (role !== "owner" || !SEQUENCE_KEYS.includes(key)) return;
+  const steps = [];
+  for (let i = 0; i < MAX_STEPS; i++) {
+    const body = str(fd, `step_${i}_body`);
+    if (!body) continue;
+    steps.push({
+      day: Math.max(0, Math.min(60, Number(str(fd, `step_${i}_day`) ?? 0) || 0)),
+      channel: fd.get(`step_${i}_channel`) === "email" ? "email" : "text",
+      subject: str(fd, `step_${i}_subject`) ?? "",
+      body,
+    });
+  }
+  steps.sort((a, b) => a.day - b.day);
+  const enabled = fd.get("enabled") === "on" && steps.length > 0;
+  const { error } = await supabase
+    .from("sequences")
+    .upsert({ org_id: org.id, key, enabled, steps, updated_at: new Date().toISOString() }, { onConflict: "org_id,key" });
+  if (error) redirect(`/settings?error=${encodeURIComponent(error.message)}`);
+  if (fd.has("review_url")) await supabase.from("organizations").update({ review_url: str(fd, "review_url") }).eq("id", org.id);
+  revalidatePath("/settings");
+  redirect(`/settings?saved=1#followups`);
+}
+
+/** Puts a sequence back to the built-in wording (keeps the on/off switch as it was). */
+export async function resetSequence(key: SequenceKey) {
+  const { supabase, org, role } = await getContext();
+  if (role !== "owner" || !SEQUENCE_KEYS.includes(key)) return;
+  const { data } = await supabase.from("sequences").select("enabled").eq("org_id", org.id).eq("key", key).maybeSingle();
+  await supabase
+    .from("sequences")
+    .upsert({ org_id: org.id, key, enabled: data?.enabled ?? false, steps: DEFAULT_STEPS[key], updated_at: new Date().toISOString() }, { onConflict: "org_id,key" });
+  revalidatePath("/settings");
+  redirect("/settings?saved=1#followups");
 }

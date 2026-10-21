@@ -28,7 +28,7 @@ export type TextUsage = {
 export async function getTextUsage(db: SupabaseClient, org: Organization): Promise<TextUsage> {
   const { key, startsAt } = currentMonth(org);
   const [{ count }, { data: tb }] = await Promise.all([
-    db.from("messages").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("direction", "out").eq("status", "sent").gte("created_at", startsAt),
+    db.from("messages").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("direction", "out").eq("channel", "sms").eq("status", "sent").gte("created_at", startsAt),
     db.from("text_blocks").select("blocks").eq("org_id", org.id).eq("month", key).maybeSingle(),
   ]);
   const used = count ?? 0;
@@ -53,7 +53,7 @@ export type OutgoingText = {
   to: string;
   body: string;
   customerId: string | null;
-  kind: "manual" | "auto_text" | "lead_alert";
+  kind: "manual" | "auto_text" | "lead_alert" | "sequence";
   sentBy?: string | null;
 };
 

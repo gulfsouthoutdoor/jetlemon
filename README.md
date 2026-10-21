@@ -74,6 +74,35 @@ column-name guesses, setup saves the owner's answers as typed, suggestions and s
 The daily rundown is a plain template (no AI) and runs from the Vercel cron in `vercel.json` once an
 hour; set `CRON_SECRET` in Vercel so only Vercel can trigger it. Owners pick the hour under Settings → Texting.
 
+### Follow-ups (text + email sequences)
+
+Three pre-made sequences under **Settings → Follow-ups**, each a switch plus up to four steps
+(day, text or email, wording): **New lead** (starts on every new lead, stops when they reply or the
+job leaves "lead"), **After the job** (starts when a job is marked completed; `{review_link}` fills
+from the business's review URL) and **Unpaid invoice** (starts when an invoice is sent, stops when
+paid or voided). Day-0 steps go immediately; later steps go at 9 AM in the business's time zone
+from the hourly `/api/cron/sequences` job. Texts go through `sendBusinessText` (Pro plan, cap,
+pause switch all apply); emails go through Resend (`RESEND_API_KEY`) from `EMAIL_FROM` with the
+business's name and reply-to, a signed unsubscribe link (`/email/stop`), and are logged in
+`messages` with `channel = 'email'`. An inbound text of STOP sets `customers.text_opt_out`.
+
+### Email links that survive mail scanners
+
+Supabase's default email templates verify the one-time token the moment the link is opened —
+and Microsoft 365 / Gmail link scanners open every link, so the real person finds it "expired".
+Point every template at `/auth/confirm`, which shows a **Continue** button and only verifies on
+the click. In Supabase → Authentication → Email Templates, set the link in each template to:
+
+| Template | Link |
+|---|---|
+| Confirm signup | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup` |
+| Invite user | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite` |
+| Magic link | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink` |
+| Change email address | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change` |
+| Reset password | `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery` |
+
+`Site URL` under Authentication → URL Configuration must be `https://jetlemon.com`.
+
 ### Admin page
 
 Set `ADMIN_EMAILS` (comma-separated) in Vercel. Those accounts get an **Admin** link in the sidebar

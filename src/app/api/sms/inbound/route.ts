@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { normalizePhone, verifyTwilioSignature } from "@/lib/sms";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { stopRuns } from "@/lib/sequences";
 
 // Twilio posts here when a customer texts a business's number. Reply shows up on the customer's page.
 export async function POST(request: NextRequest) {
@@ -29,6 +30,13 @@ export async function POST(request: NextRequest) {
       .select("id")
       .single();
     customer = created;
+  }
+
+  if (customer) {
+    // A reply ends any running follow-up; STOP/UNSUBSCRIBE opts them out of texts (Twilio blocks sends too).
+    await stopRuns(admin, { customerId: customer.id }, "customer replied");
+    if (/^\s*(stop|stopall|unsubscribe|cancel|end|quit)\b/i.test(body)) await admin.from("customers").update({ text_opt_out: true }).eq("id", customer.id);
+    else if (/^\s*(start|unstop|yes)\b/i.test(body)) await admin.from("customers").update({ text_opt_out: false }).eq("id", customer.id);
   }
 
   await admin.from("messages").insert({

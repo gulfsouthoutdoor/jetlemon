@@ -48,20 +48,21 @@ export default async function CustomerPage({ params, searchParams }: { params: P
       <ErrorNote message={error} />
       <div className="mt-4 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <Card title="Text messages">
+          <Card title="Texts & emails">
             {(messages as Message[])?.length ? (
               <ul className="mb-4 flex max-h-96 flex-col gap-2 overflow-y-auto">
                 {(messages as Message[]).map((m) => (
                   <li key={m.id} className={`flex ${m.direction === "out" ? "justify-end" : "justify-start"}`}>
                     <div
                       className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                        m.direction === "out" ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-900"
+                        m.direction === "out" ? (m.channel === "email" ? "bg-indigo-50 text-indigo-950 ring-1 ring-inset ring-indigo-200" : "bg-indigo-600 text-white") : "bg-slate-100 text-slate-900"
                       }`}
                     >
                       <p className="whitespace-pre-wrap">{m.body}</p>
-                      <p className={`mt-1 text-[11px] ${m.direction === "out" ? "text-indigo-200" : "text-slate-400"}`}>
+                      <p className={`mt-1 text-[11px] ${m.direction === "out" && m.channel !== "email" ? "text-indigo-200" : "text-slate-400"}`}>
                         {dateTime(m.created_at, org.timezone)}
-                        {m.kind === "auto_text" ? " · auto" : ""}
+                        {m.channel === "email" ? " · email" : ""}
+                        {m.kind === "auto_text" ? " · auto" : m.kind === "sequence" ? " · follow-up" : ""}
                         {m.status.startsWith("failed") ? " · not delivered" : ""}
                       </p>
                     </div>

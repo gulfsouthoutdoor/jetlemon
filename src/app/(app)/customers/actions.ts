@@ -85,7 +85,7 @@ export async function suggestReplies(customerId: string): Promise<{ suggestions:
   ]);
   if (!customer) return { suggestions: [], error: "Customer not found." };
   const thread = (messages ?? []).reverse().map((m) => `${m.direction === "in" ? "Customer" : "Us"} (${dateTime(m.created_at, org.timezone)}): ${m.body}`).join("\n");
-  const system = `You draft text-message replies for a small service business owner to send to a customer. Sound like a real person who runs the business: short, warm, plain. 1-2 sentences each, under 240 characters, no emojis, no sign-offs. Never promise a price, date, or time the thread doesn't already support — offer to confirm instead. Give three different options: one quick, one that asks a clarifying question, one that moves toward booking.
+  const system = `You draft text-message replies for a small business owner to send to a customer. Sound like a real person who runs the business: short, warm, plain. 1-2 sentences each, under 240 characters, no emojis, no sign-offs. Never promise a price, date, or time the thread doesn't already support — offer to confirm instead. Give three different options: one quick, one that asks a clarifying question, one that moves toward booking.
 ${businessContext(org)}
 Return JSON: {"suggestions": ["...", "...", "..."]}`;
   const user = `Customer: ${customer.name}${customer.address ? ", " + customer.address : ""}${customer.tags?.length ? " [" + customer.tags.join(", ") + "]" : ""}

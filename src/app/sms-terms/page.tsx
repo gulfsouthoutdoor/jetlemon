@@ -9,7 +9,7 @@ export default function SmsTermsPage() {
     <LegalPage title="Texting (SMS) Terms">
       <h2>What this is</h2>
       <p>
-        JetLemon is software that local service businesses (cleaners, lawn care, plumbers, electricians, HVAC and similar) use to run their work. Part of that is texting
+        JetLemon is software that small businesses use to run their customer work. Part of that is texting
         their customers from a dedicated business number. These terms cover those texts. {LEGAL.entity} provides the software; the business you contacted is who is
         texting you.
       </p>

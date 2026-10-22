@@ -4,12 +4,12 @@ import { ButtonLink } from "@/components/ui";
 import { PLANS } from "@/lib/stripe";
 
 const features = [
-  { title: "Customer database", body: "Every client's contact info, service address, gate codes and history in one place." },
-  { title: "Drag-free scheduling", body: "A weekly calendar of every job. See who's booked, where, and when at a glance." },
-  { title: "Job tracking", body: "Move work from lead → scheduled → in progress → completed with one click." },
-  { title: "Invoices in seconds", body: "Turn a finished job into an invoice instantly. Print, PDF or email it to your customer." },
+  { title: "Every customer, one place", body: "Contact info, addresses, notes, every text and email, every job and invoice — all on one page." },
+  { title: "Leads that never go cold", body: "Leads from your website and Facebook land in JetLemon and get a text and an email in seconds, then follow-ups until they answer." },
+  { title: "Proposals they accept on their phone", body: "Send a priced proposal with optional add-ons. They tick what they want, type their name, pay the deposit." },
+  { title: "Schedule and jobs", body: "A weekly calendar of the work. Move it from lead → scheduled → done with one click." },
   { title: "Get paid faster", body: "Every invoice has a pay-by-card link. Automatic reminders chase the unpaid ones so you don't have to." },
-  { title: "Built for teams", body: "Invite your crew, assign jobs, and keep everyone on the same page." },
+  { title: "Built for small teams", body: "Invite your people, assign work, and keep everyone on the same page. No per-seat fees." },
 ];
 
 export default function LandingPage() {
@@ -28,10 +28,10 @@ export default function LandingPage() {
       </header>
 
       <section className="mx-auto max-w-4xl px-6 pb-20 pt-16 text-center">
-        <p className="mb-4 inline-block rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700">For cleaning, delivery & field service businesses</p>
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">The simple CRM that runs your service business</h1>
+        <p className="mb-4 inline-block rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700">Built for small business</p>
+        <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">The simple CRM for small business</h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600">
-          Customers, scheduling, jobs and invoicing — in one place. Stop juggling spreadsheets, texts and sticky notes.
+          Leads, customers, proposals, scheduling, invoices and follow-ups — in one place, without the 40-item menu. Stop juggling spreadsheets, texts and sticky notes.
         </p>
         <div className="mt-8 flex justify-center gap-3">
           <ButtonLink href="/signup" className="px-5 py-3 text-base">

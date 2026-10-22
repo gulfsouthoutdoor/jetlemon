@@ -1,6 +1,6 @@
 # JetLemon
 
-A simple multi-tenant SaaS CRM for service businesses (cleaning, delivery, field service, trades).
+A simple multi-tenant SaaS CRM for small businesses of every kind.
 
 **Features**
 - Marketing landing page with pricing, then sign-up and a 14-day free trial

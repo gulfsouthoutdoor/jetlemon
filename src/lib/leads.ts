@@ -97,7 +97,7 @@ export async function createInboundLead(admin: SupabaseClient, orgId: string, le
   if (aiConfigured()) {
     try {
       const r = await askJson<{ summary: string }>(
-        `You summarize a new lead for a busy service business owner in ONE sentence (under 160 characters): what they want, any timing or budget signals, and the single best next step. Plain words, no emojis.\n${businessContext(org)}\nReturn JSON: {"summary": "..."}`,
+        `You summarize a new lead for a busy small business owner in ONE sentence (under 160 characters): what they want, any timing or budget signals, and the single best next step. Plain words, no emojis.\n${businessContext(org)}\nReturn JSON: {"summary": "..."}`,
         lines.join("\n") + `\nName: ${name}${phone ? ", phone on file" : ", no phone"}${email ? ", email on file" : ""}`,
         200,
       );

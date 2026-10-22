@@ -6,7 +6,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy">
       <p>
-        JetLemon is a customer-management tool for small service businesses. This policy explains what information we handle, why, and what your choices are. It is written
+        JetLemon is a customer-management tool for small businesses. This policy explains what information we handle, why, and what your choices are. It is written
         in plain language on purpose. &ldquo;We&rdquo; and &ldquo;us&rdquo; means {LEGAL.entity}, the operator of jetlemon.com.
       </p>
 

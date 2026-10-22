@@ -156,7 +156,7 @@ export async function draftProposal(id: string, fd: FormData) {
   let draft: Draft | undefined;
   try {
     draft = await askJson<Draft>(
-      `You write proposals for a small service business. From the owner's short description, produce a clear title, a 2-3 sentence friendly intro addressed to the customer (no prices, no promises about timing), and 3-8 line items a customer would understand. Mark true add-ons as optional. Never invent prices. Plain words, no hype.\n${businessContext(org)}\nReturn JSON: {"title": "...", "intro": "...", "items": [{"description": "...", "quantity": 1, "optional": false}]}`,
+      `You write proposals for a small business. From the owner's short description, produce a clear title, a 2-3 sentence friendly intro addressed to the customer (no prices, no promises about timing), and 3-8 line items a customer would understand. Mark true add-ons as optional. Never invent prices. Plain words, no hype.\n${businessContext(org)}\nReturn JSON: {"title": "...", "intro": "...", "items": [{"description": "...", "quantity": 1, "optional": false}]}`,
       `Customer: ${customer}\nWork: ${brief}`,
       1200,
     );

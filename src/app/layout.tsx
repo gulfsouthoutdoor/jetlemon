@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "JetLemon — CRM for service businesses", template: "%s · JetLemon" },
-  description: "Customers, scheduling, jobs and invoicing for cleaning, delivery, and field service businesses.",
+  title: { default: "JetLemon — the simple CRM for small business", template: "%s · JetLemon" },
+  description: "Leads, customers, proposals, scheduling, invoices and automatic follow-ups for small businesses of every kind.",
 };
 
 export default function RootLayout({

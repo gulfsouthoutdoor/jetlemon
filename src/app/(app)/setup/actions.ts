@@ -62,7 +62,7 @@ export async function draftProfile(fd: FormData) {
   };
 
   if (aiConfigured()) {
-    const system = `You set up a CRM for a small service business from a few plain answers (and their website text, if any). Write like a friendly local business owner, not a marketer. No emojis, no hype, no exclamation points.
+    const system = `You set up a CRM for a small business from a few plain answers (and their website text, if any). Write like a friendly local business owner, not a marketer. No emojis, no hype, no exclamation points.
 Return JSON: {"services": one sentence of what they do, "service_area": short, "hours": short, "phone": "" unless found on the site, "address": "" unless found on the site,
 "auto_text_template": the first text a new lead gets, under 160 characters, must include {first_name} and {business}, must end by asking when is a good time to call,
 "lead_form_intro": one sentence shown above their lead form, "invoice_footer": one short line for the bottom of invoices (thanks + how to pay if the site says),

@@ -44,7 +44,7 @@ export function parseUpload(buffer: Buffer, filename: string): Sheet[] {
 export async function proposeMapping(sheets: Sheet[], aiOn: boolean): Promise<Mapping> {
   if (!aiOn) return { sheets: sheets.map(guessSheet), summary: "Mapped by column names. Check each one below." };
   const sample = sheets.map((s) => ({ sheet: s.name, headers: s.headers, sample_rows: s.rows.slice(0, 5), row_count: s.rows.length }));
-  const system = `You map spreadsheet columns from a small service business (cleaning, lawn care, trades, etc.) into a simple CRM. The export may come from GoHighLevel, Jobber, Housecall Pro, QuickBooks, a phone contact list, or a homemade sheet.
+  const system = `You map spreadsheet columns from a small business (any kind) into a simple CRM. The export may come from GoHighLevel, Jobber, Housecall Pro, QuickBooks, a phone contact list, or a homemade sheet.
 For each sheet decide kind: "customers" (people/companies with contact info), "jobs" (visits, appointments, work orders, opportunities, pipeline deals), or "skip".
 Customer fields: ${CUSTOMER_FIELDS.join(", ")}. Job fields: ${JOB_FIELDS.join(", ")}.
 Use "notes" for anything useful that has no field (last service date, gate code, how they found us). Use "skip" for ids, timestamps, booleans, and junk.

@@ -1,0 +1,6 @@
+# JetLemon security contact. Found something? Tell us and we'll fix it.
+Contact: mailto:hello@jetlemon.com
+Preferred-Languages: en
+Canonical: https://jetlemon.com/.well-known/security.txt
+Policy: https://jetlemon.com/privacy
+Expires: 2027-10-22T00:00:00.000Z

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Wordmark } from "@/components/auth-shell";
 import { ButtonLink } from "@/components/ui";
 import { PLANS } from "@/lib/stripe";
+import { LEGAL } from "@/components/legal-page";
 
 const features = [
   { title: "Every customer, one place", body: "Contact info, addresses, notes, every text and email, every job and invoice — all on one page." },
@@ -82,7 +83,12 @@ export default function LandingPage() {
       </section>
 
       <footer className="border-t border-slate-100 py-8 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} JetLemon ·{" "}
+        © {new Date().getFullYear()} {LEGAL.entity}
+        {LEGAL.address ? ` · ${LEGAL.address}` : ""} ·{" "}
+        <a href={`mailto:${LEGAL.email}`} className="hover:text-slate-900">
+          {LEGAL.email}
+        </a>{" "}
+        ·{" "}
         <Link href="/privacy" className="hover:text-slate-900">
           Privacy
         </Link>{" "}
